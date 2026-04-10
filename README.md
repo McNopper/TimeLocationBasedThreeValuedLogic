@@ -138,6 +138,12 @@ This is a novel *packaging* of known ideas into a minimal, unified formal system
 
 ---
 
+## Author
+
+Norbert Nopper
+
+---
+
 ## References
 
 - Łukasiewicz, J. (1920). *O logice trójwartościowej* [On three-valued logic]. Ruch Filozoficzny, 5, 170–171.
