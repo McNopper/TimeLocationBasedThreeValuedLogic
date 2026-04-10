@@ -4,6 +4,8 @@
 
 A formal logic where truth is never absolute. Every proposition is evaluated with respect to **where** and **when** — there is no such thing as a "bare" truth value.
 
+by *Norbert Nopper*
+
 ---
 
 ## Three Values
@@ -135,12 +137,6 @@ The contribution of this system is in its **formulation**, not in the discovery 
 3. **Minimalism** — no modal operators (□, ◇), no accessibility relations, no transition systems. Just `V(p, l, θ) → {T, F, U}` as a self-contained primitive.
 
 This is a novel *packaging* of known ideas into a minimal, unified formal system — not a novel discovery.
-
----
-
-## Author
-
-Norbert Nopper
 
 ---
 
