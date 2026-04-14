@@ -119,6 +119,10 @@ V(p₁, l₁, θ₁) ∧ V(p₂, l₂, θ₂)  -- undefined: cross-frame composi
 
 The logical connectives never escape the location and temporal frame.
 
+Biconditional (`↔`) and quantifiers (`∀`, `∃`) are deliberately omitted to keep the system minimal. They can be defined in terms of the primitives above if needed.
+
+Cross-frame composition — combining values from different `(l, θ)` pairs — is left undefined by design. Defining it would require explicit bridging rules (e.g., synchronization constraints, trust policies, or frame-alignment functions) that are domain-specific and beyond the scope of this core system.
+
 ---
 
 ## Novelty
@@ -134,7 +138,7 @@ The contribution of this system is in its **formulation**, not in the discovery 
 
 1. **Location as concrete and non-optional** — not abstract "possible worlds" or "states", but a first-class parameter representing physical locations, systems, jurisdictions, or frames of reference.
 2. **The cross-frame constraint** — logical connectives are explicitly undefined across different `(l, θ)` pairs, rather than silently mixing contexts.
-3. **Minimalism** — no modal operators (□, ◇), no accessibility relations, no transition systems. Just `V(p, l, θ) → {T, F, U}` as a self-contained primitive.
+3. **Minimalism** — no modal operators (□, ◇), no accessibility relations, no transition systems. Just `V : P × L × Θ → {T, F, U}` as a self-contained primitive.
 
 This is a novel *packaging* of known ideas into a minimal, unified formal system — not a novel discovery.
 
