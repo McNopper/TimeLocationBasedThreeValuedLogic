@@ -54,3 +54,9 @@ pdflatex paper.tex   # second pass resolves cross-references
 ```
 
 No external bibliography tool is required — references are embedded via `thebibliography`.
+
+## License
+
+This work — including the paper (`paper.tex`, `paper.pdf`) and accompanying text — is licensed under the **[Creative Commons Attribution 4.0 International License (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)**.
+
+You are free to share and adapt the material for any purpose, even commercially, provided that appropriate credit is given to the author (Norbert Nopper) and a link to the license is provided. See [LICENSE](LICENSE) for the full legal text.
