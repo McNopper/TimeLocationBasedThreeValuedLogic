@@ -18,8 +18,26 @@
   urlcolor=blue!60!black,
 }
 
+\theoremstyle{definition}
 \newtheorem{definition}{Definition}
-\newtheorem{remark}{Remark}
+\newtheorem{example}[definition]{Example}
+
+\theoremstyle{plain}
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem{proposition}[definition]{Proposition}
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{corollary}[definition]{Corollary}
+
+\theoremstyle{remark}
+\newtheorem{remark}[definition]{Remark}
+
+\newcommand{\Tv}{\mathbf{T}}
+\newcommand{\Fv}{\mathbf{F}}
+\newcommand{\Uv}{\mathbf{U}}
+\newcommand{\Vals}{\{\Tv, \Fv, \Uv\}}
+\newcommand{\Vh}{\widehat{V}}
+\newcommand{\frm}{(l, \theta, o)}
+\newcommand{\entails}{\vDash}
 
 \title{Location, Time, and Observer Based Three-Valued Logic:\\
 A Minimal Formal System Where Truth is Never Absolute}
@@ -31,250 +49,581 @@ A Minimal Formal System Where Truth is Never Absolute}
 
 \begin{abstract}
 \noindent
-We present a minimal formal system in which the truth value of a proposition
-is never absolute, but is always evaluated with respect to three explicit
-parameters: a \emph{location}, a \emph{time}, and an \emph{observer}.
-The system admits exactly three truth values---\textbf{T}~(true),
-\textbf{F}~(false), and \textbf{U}~(unknown)---composed via Kleene's strong
-three-valued connectives. Although three-valued logics, temporal logics,
-epistemic logics, and modal logics have all been studied extensively, the
-present contribution is not the discovery of new components but a
-\emph{packaging} of known ideas into a single, minimal, self-contained primitive
-$V : P \times L \times \Theta \times O \to \{T, F, U\}$, in which location and
-observer are concrete and non-optional, and in which logical connectives are
-explicitly undefined across distinct $(l, \theta, o)$ frames. The result is a
-unified framework suitable as a starting point for systems that must reason
-about partial knowledge under spatial, temporal, and epistemic context.
+We present \textbf{LTO-K3}, a minimal formal system in which the truth value
+of a proposition is never absolute but is always evaluated with respect to
+three explicit parameters: a \emph{location}, a \emph{time}, and an
+\emph{observer}. The system admits exactly three truth values---$\Tv$~(true),
+$\Fv$~(false), and $\Uv$~(unknown)---composed via Kleene's strong three-valued
+connectives. We give a formal syntax, a compositional point-wise semantics
+$\Vh : \mathcal{L} \times L \times \Theta \times O \to \Vals$, two consequence
+relations (local and universal), and prove a small body of results:
+information-monotonicity, conservativity over classical logic, locality,
+absence of $\Tv$-tautologies (a known property of $K_3$ that we re-derive in
+the indexed setting), and the De~Morgan laws. We are careful to distinguish
+what is genuinely new (the \emph{packaging}: location and observer as
+non-optional, concrete parameters; a deliberate refusal to introduce modal
+operators) from what is inherited from established work (Kleene
+semantics~\cite{kleene1952}, modal/temporal/epistemic
+indexing~\cite{prior1957,hintikka1962,kripke1963}, three-valued spatio-temporal
+logics in verification). The contribution is therefore a careful synthesis,
+not a discovery, and we name its limitations explicitly.
 \end{abstract}
 
-\noindent\textbf{Keywords:} three-valued logic, temporal logic, epistemic logic,
-Kleene logic, contextual semantics.
+\noindent\textbf{Keywords:} three-valued logic, Kleene logic, indexed
+semantics, temporal logic, epistemic logic, contextual semantics, partial
+information.
 
 \section{Introduction}
 Classical two-valued logic forces every proposition into one of two states:
-\emph{true} or \emph{false}. In many practical settings---verification,
-distributed systems, knowledge representation, robotics, legal reasoning---this
-dichotomy is too coarse. Truth often depends on \emph{where} an evaluation is
-performed, \emph{when} it is performed, and \emph{who} performs it.
+\emph{true} or \emph{false}. In many practical settings---verification of
+distributed systems, knowledge representation, robotics, legal reasoning, data
+quality---this dichotomy is too coarse. Truth often depends on \emph{where} an
+evaluation is performed, \emph{when} it is performed, and \emph{who} performs
+it, and in many cases the evaluator simply does not know.
 
-We introduce a minimal logic that takes these dependencies as primitive.
-Every proposition is evaluated under an explicit tuple
-$(l, \theta, o)$ of location, time, and observer, and may take one of three
-values: true, false, or unknown. The system is intentionally austere: it
-contains no modal operators, no accessibility relations, and no transition
-systems. Its purpose is to serve as a compact, unambiguous core on which richer
-domain-specific layers (synchronization, trust, frame alignment) may later be
-built.
+We introduce a minimal logic, \textbf{LTO-K3} (Location, Time, Observer;
+Kleene three-valued), that takes these dependencies as primitive. Every
+atomic proposition is evaluated under an explicit tuple $\frm$ of location,
+time, and observer, and may take one of three values: true, false, or
+unknown. Compound formulas are evaluated point-wise via Kleene's strong
+three-valued tables.
 
-\section{Truth Values}
-The system recognizes exactly three truth states, summarized in
-Table~\ref{tab:values}.
+The system is intentionally austere. It contains no modal operators, no
+accessibility relations, no transition systems, and no quantification over
+locations, times, or observers. Its purpose is to serve as a compact,
+unambiguous core on which richer domain-specific layers (synchronization,
+trust, frame alignment, modal operators) may later be built.
 
-\begin{table}[h]
-\centering
-\caption{The three truth values.}
-\label{tab:values}
-\begin{tabular}{ll}
-\toprule
-\textbf{Value} & \textbf{Meaning} \\
-\midrule
-\textbf{T} (True)    & Known to hold at this location, time, and for this observer. \\
-\textbf{F} (False)   & Known not to hold at this location, time, and for this observer. \\
-\textbf{U} (Unknown) & Indeterminate at this location, time, and for this observer. \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Classical logic forces every proposition into \textbf{T} or \textbf{F}. The
-present system acknowledges a third reality: that we do not always know.
-
-\section{Contextual Parameters}
-
-\subsection{Location}
-Truth is a function of \emph{where} it is evaluated. The same proposition at
-the same moment can hold different values in different locations:
-\begin{align*}
-V(p, l_1, \theta, o) &= T \qquad \text{true in this location,} \\
-V(p, l_2, \theta, o) &= F \qquad \text{false in another,} \\
-V(p, l_3, \theta, o) &= U \qquad \text{unknown elsewhere.}
-\end{align*}
-``Location'' is broadly defined: a physical place, a network, a jurisdiction,
-or a frame of reference. The essential point is that spatial and structural
-context matters.
-
-\subsection{Time}
-Truth is a function of \emph{when} it is evaluated. The same proposition can
-yield different values at different moments---and this is not a contradiction,
-it is the system working as designed:
-\begin{align*}
-V(p, l, \theta_1, o) &= U \qquad \text{not yet determined,} \\
-V(p, l, \theta_2, o) &= T \qquad \text{resolved to true,} \\
-V(p, l, \theta_3, o) &= F \qquad \text{later becomes false.}
-\end{align*}
-A future event is \emph{unknown} before it occurs, \emph{true} when it
-happens, and may become \emph{false} if conditions change. Time is not
-optional: it is fundamental to every evaluation.
-
-\subsection{Observer}
-Truth is a function of \emph{who} evaluates it. The same proposition at the
-same location and time can hold different values for different observers:
-\begin{align*}
-V(p, l, \theta, o_1) &= T \qquad \text{true for this observer,} \\
-V(p, l, \theta, o_2) &= F \qquad \text{false for another,} \\
-V(p, l, \theta, o_3) &= U \qquad \text{unknown to a third.}
-\end{align*}
-``Observer'' is broadly defined: a person, a sensor, a system, an institution,
-or any evaluating entity. Different observers may have different information,
-beliefs, or interpretive frameworks, and therefore arrive at different truth
-values for the same proposition at the same location and time. This reflects
-the epistemic reality that knowledge is observer-dependent.
-
-\section{The Valuation Function}
-The core primitive maps a proposition, evaluated at a location, time, and for
-an observer, to a truth value.
-
-\begin{definition}[Valuation]
-Let $P$ be a set of propositions, $L$ a set of locations, $\Theta$ a set of
-time points, and $O$ a set of observers. The valuation function is
-\[
-V : P \times L \times \Theta \times O \;\longrightarrow\; \{T, F, U\}.
-\]
-For any $p \in P$, $l \in L$, $\theta \in \Theta$, and $o \in O$,
-\[
-V(p, l, \theta, o) \in \{T, F, U\}.
-\]
-\end{definition}
-
-Location, time, and observer are the \emph{inputs}; the truth value is the
-\emph{output}. No parameter is optional.
-
-\section{Logical Connectives}
-The three values compose through Kleene's strong three-valued
-operations~\cite{kleene1952}.
-
-\subsection{Conjunction}
-\[
-\begin{array}{c|ccc}
-\land & T & U & F \\ \hline
-T & T & U & F \\
-U & U & U & F \\
-F & F & F & F
-\end{array}
-\]
-
-\subsection{Disjunction}
-\[
-\begin{array}{c|ccc}
-\lor & T & U & F \\ \hline
-T & T & T & T \\
-U & T & U & U \\
-F & T & U & F
-\end{array}
-\]
-
-\subsection{Negation}
-\[
-\begin{array}{c|c}
-p & \lnot p \\ \hline
-T & F \\
-U & U \\
-F & T
-\end{array}
-\]
-
-\subsection{Implication}
-\[
-\begin{array}{c|ccc}
-\to & T & U & F \\ \hline
-T & T & U & F \\
-U & T & U & U \\
-F & T & T & T
-\end{array}
-\]
-
-\subsection{Frame Discipline}
-All operations are evaluated at a given $(l, \theta, o)$. When combining
-propositions, both must be evaluated within the same frame:
-\begin{align*}
-V(p_1, l, \theta, o) \land V(p_2, l, \theta, o) &\quad \text{valid: same } (l, \theta, o), \\
-V(p_1, l_1, \theta_1, o_1) \land V(p_2, l_2, \theta_2, o_2) &\quad \text{undefined: cross-frame composition.}
-\end{align*}
-The logical connectives never escape the location, temporal, and observer
-frame.
-
-\begin{remark}
-Biconditional ($\leftrightarrow$) and quantifiers ($\forall$, $\exists$) are
-deliberately omitted to keep the system minimal. They can be defined in terms
-of the primitives above if needed.
-\end{remark}
-
-\begin{remark}
-Cross-frame composition---combining values from different
-$(l, \theta, o)$ tuples---is left undefined by design. Defining it would
-require explicit bridging rules (synchronization constraints, trust policies,
-observer-alignment or frame-alignment functions) that are domain-specific and
-beyond the scope of this core system.
-\end{remark}
-
-\section{Novelty and Related Work}
-The individual components of this system are well-established. Three-valued
-logics due to {\L}ukasiewicz~\cite{lukasiewicz1920} and
-Kleene~\cite{kleene1952} define truth values without temporal or spatial
-indexing. Temporal logics such as LTL and CTL, building on the tradition
-initiated by Prior~\cite{prior1957}, index truth by time but rest on
-classical two-valued semantics. Epistemic logics~\cite{hintikka1962} index
-truth by agent knowledge but typically remain two-valued. Modal
-logics~\cite{kripke1963} index truth by possible worlds, again typically
-two-valued. Three-valued spatio-temporal logics have been explored in
-verification and robotics contexts.
-
-The contribution of the present system is in its \emph{formulation}, not in
-the discovery of its parts:
+\paragraph{Contributions.}
 \begin{enumerate}
-  \item \textbf{Location as concrete and non-optional.} Not abstract
-  ``possible worlds'' or ``states'', but a first-class parameter representing
-  physical places, networks, jurisdictions, or frames of reference.
-  \item \textbf{Observer as explicit and non-optional.} Truth is always
-  relative to an evaluating entity, making the epistemic dimension a
-  first-class parameter rather than an implicit assumption.
-  \item \textbf{The cross-frame constraint.} Logical connectives are
-  explicitly undefined across different $(l, \theta, o)$ tuples, rather than
-  silently mixing contexts.
-  \item \textbf{Minimalism.} No modal operators ($\Box$, $\Diamond$), no
-  accessibility relations, no transition systems. Just
-  $V : P \times L \times \Theta \times O \to \{T, F, U\}$ as a self-contained
-  primitive.
+  \item A formal syntax and compositional point-wise semantics for a
+  three-valued indexed logic over $(L, \Theta, O)$ frames (Sections~\ref{sec:syntax}--\ref{sec:semantics}).
+  \item Two consequence relations---local at a frame and universal across
+  frames---based on the designated value $\Tv$ (Section~\ref{sec:consequence}).
+  \item A small body of meta-theoretic results (Section~\ref{sec:properties}):
+  information-monotonicity, locality, conservativity over classical logic,
+  De~Morgan laws, and the absence of $\Tv$-tautologies in the unindexed
+  fragment.
+  \item An explicit comparison with the closest neighbours: Kleene $K_3$,
+  {\L}ukasiewicz $\text{\L}_3$, Belnap's $\mathbf{FOUR}$, Priest's LP,
+  Bochvar $B_3$, hybrid logic, and multi-agent epistemic temporal logic
+  (Section~\ref{sec:related}).
+  \item A frank limitations section (Section~\ref{sec:limitations}).
 \end{enumerate}
 
-This is a novel \emph{packaging} of known ideas into a minimal, unified formal
-system---not a novel discovery.
+\paragraph{What is and is not new.}
+None of the parts is new. Three-valued logics go back to
+{\L}ukasiewicz~\cite{lukasiewicz1920} and Kleene~\cite{kleene1952}. Temporal
+indexing goes back to Prior~\cite{prior1957}; possible-worlds indexing to
+Kripke~\cite{kripke1963}; agent indexing to Hintikka~\cite{hintikka1962} and,
+in computer science, to Fagin~et~al.~\cite{fagin1995}. What is new is the
+\emph{packaging}: making location, time, and observer all simultaneously
+non-optional, concrete, first-class parameters of a single valuation
+function, and deliberately refusing to lift them with modal operators. We
+state this honestly throughout.
+
+\section{Preliminaries: Kleene's Strong Three-Valued Logic}
+\label{sec:prelim}
+
+Kleene's strong three-valued logic $K_3$~\cite{kleene1952} extends classical
+two-valued logic with a third value $\Uv$ (``unknown'' or ``undefined'') and
+defines the connectives so that $\Uv$ propagates conservatively: a connective
+returns $\Tv$ (resp.\ $\Fv$) iff every way of resolving each $\Uv$ to $\Tv$
+or $\Fv$ would yield $\Tv$ (resp.\ $\Fv$); otherwise it returns $\Uv$. This
+``supervaluation-like'' character is what makes $K_3$ the natural choice
+when $\Uv$ is read epistemically as ``not yet known''. The truth tables are:
+
+\begin{center}
+$\begin{array}{c|ccc}
+\land & \Tv & \Uv & \Fv \\ \hline
+\Tv & \Tv & \Uv & \Fv \\
+\Uv & \Uv & \Uv & \Fv \\
+\Fv & \Fv & \Fv & \Fv
+\end{array}$\qquad
+$\begin{array}{c|ccc}
+\lor & \Tv & \Uv & \Fv \\ \hline
+\Tv & \Tv & \Tv & \Tv \\
+\Uv & \Tv & \Uv & \Uv \\
+\Fv & \Tv & \Uv & \Fv
+\end{array}$\qquad
+$\begin{array}{c|c}
+p & \lnot p \\ \hline
+\Tv & \Fv \\
+\Uv & \Uv \\
+\Fv & \Tv
+\end{array}$\qquad
+$\begin{array}{c|ccc}
+\to & \Tv & \Uv & \Fv \\ \hline
+\Tv & \Tv & \Uv & \Fv \\
+\Uv & \Tv & \Uv & \Uv \\
+\Fv & \Tv & \Tv & \Tv
+\end{array}$
+\end{center}
+
+Material implication is defined as $\varphi \to \psi \;:=\; \lnot \varphi
+\lor \psi$. We use this strong-Kleene implication throughout; for the
+contrast with {\L}ukasiewicz's $\text{\L}_3$ (where $\Uv \to \Uv = \Tv$) see
+Section~\ref{sec:related}.
+
+\paragraph{Information ordering.}
+Define the partial order $\sqsubseteq$ on $\Vals$ by $\Uv \sqsubseteq \Tv$,
+$\Uv \sqsubseteq \Fv$, and $x \sqsubseteq x$ for all $x$; $\Tv$ and $\Fv$
+are incomparable. Intuitively, $x \sqsubseteq y$ means ``$y$ contains at
+least as much information as $x$.'' All Kleene connectives are
+\emph{monotone} in $\sqsubseteq$ component-wise---resolving an $\Uv$ to
+$\Tv$ or $\Fv$ never reverses an already-determined truth value. This
+monotonicity is the formal reason $K_3$ is appropriate when $\Uv$ denotes
+epistemic uncertainty.
+
+\section{Syntax}
+\label{sec:syntax}
+
+Fix a countably infinite set $\mathrm{AP}$ of \emph{atomic propositions}
+$p, q, r, \ldots$. The language $\mathcal{L}$ is generated by the grammar
+\[
+\varphi, \psi \;::=\; p \;\mid\; \lnot\varphi \;\mid\; (\varphi \land \psi)
+\;\mid\; (\varphi \lor \psi) \;\mid\; (\varphi \to \psi),
+\qquad p \in \mathrm{AP}.
+\]
+We omit parentheses under the usual precedence
+$\lnot > \land > \lor > {\to}$. The language has no constants, no
+biconditional, and no quantifiers. The set of atomic propositions occurring
+in $\varphi$ is written $\mathrm{AP}(\varphi)$.
+
+\begin{remark}
+The biconditional $\varphi \leftrightarrow \psi$ and the quantifiers
+$\forall, \exists$ are deliberately omitted. The biconditional can be
+defined as $(\varphi \to \psi) \land (\psi \to \varphi)$ but its $K_3$
+behaviour is non-standard (it is not the equivalence relation classically
+expected) and we prefer to omit it from the core. Quantifiers would force a
+domain commitment and are orthogonal to the indexing concern of this paper.
+Crucially, the language contains \emph{no modal operators} indexed over
+$L$, $\Theta$, or $O$ (no $\Box_l$, no $\mathsf{F}\theta$, no
+$K_o\varphi$). This is the essential design choice: indices appear in the
+meta-language (the semantics), not in the object language.
+\end{remark}
+
+\section{Semantics}
+\label{sec:semantics}
+
+\subsection{Frames and models}
+
+\begin{definition}[Frame]
+A \emph{frame} is a triple $\mathcal{F} = (L, \Theta, O)$ where $L$, $\Theta$,
+and $O$ are non-empty sets of \emph{locations}, \emph{times}, and
+\emph{observers}, respectively. We call $\frm \in L \times \Theta \times O$
+a \emph{point} of the frame.
+\end{definition}
+
+We impose no structure on $L$, $\Theta$, or $O$. In particular $\Theta$ is
+not required to be ordered, $L$ not required to carry a topology, and $O$
+not required to carry an information-state relation. Any such structure is
+a domain-specific extension; see Section~\ref{sec:limitations}.
+
+\begin{definition}[Model]
+An \emph{LTO-K3 model} is a pair $\mathcal{M} = (\mathcal{F}, V)$ where
+$\mathcal{F} = (L, \Theta, O)$ is a frame and
+\[
+V : \mathrm{AP} \times L \times \Theta \times O \;\longrightarrow\; \Vals
+\]
+is a \emph{base valuation} that assigns a truth value to each atomic
+proposition at each point. Note that $V$ is total: every atomic proposition
+has a value (possibly $\Uv$) at every point.
+\end{definition}
+
+\subsection{Compositional valuation}
+
+The base valuation $V$ extends uniquely to a valuation $\Vh$ on all formulas
+by structural recursion using the Kleene tables of Section~\ref{sec:prelim}.
+
+\begin{definition}[Extended valuation]
+Let $\mathcal{M} = (\mathcal{F}, V)$ be a model with $\mathcal{F} =
+(L, \Theta, O)$. The \emph{extended valuation}
+$\Vh : \mathcal{L} \times L \times \Theta \times O \to \Vals$ is defined by
+recursion on $\varphi$:
+\begin{align*}
+\Vh(p, l, \theta, o) &\;=\; V(p, l, \theta, o), \quad p \in \mathrm{AP}, \\
+\Vh(\lnot\varphi, l, \theta, o) &\;=\; \lnot_{K_3} \Vh(\varphi, l, \theta, o), \\
+\Vh(\varphi \land \psi, l, \theta, o) &\;=\; \Vh(\varphi, l, \theta, o) \land_{K_3} \Vh(\psi, l, \theta, o), \\
+\Vh(\varphi \lor \psi, l, \theta, o) &\;=\; \Vh(\varphi, l, \theta, o) \lor_{K_3} \Vh(\psi, l, \theta, o), \\
+\Vh(\varphi \to \psi, l, \theta, o) &\;=\; \Vh(\varphi, l, \theta, o) \to_{K_3} \Vh(\psi, l, \theta, o),
+\end{align*}
+where $\lnot_{K_3}, \land_{K_3}, \lor_{K_3}, \to_{K_3}$ are the connectives
+of Section~\ref{sec:prelim}.
+\end{definition}
+
+This is the entire semantics. Crucially, the recursion is \emph{point-wise}:
+both sides of every binary connective are evaluated at \emph{the same}
+point $\frm$. There is no syntactic mechanism in $\mathcal{L}$ for
+referring to a different point.
+
+\begin{remark}[Cross-frame composition]
+A natural question is how to combine $\Vh(\varphi, l_1, \theta_1, o_1)$
+with $\Vh(\psi, l_2, \theta_2, o_2)$. The answer in LTO-K3 is: \emph{the
+language does not express such combinations}. There is no formula whose
+two sub-formulas are evaluated at different points; the recursion above
+forces a single $\frm$ throughout. Defining cross-frame operators would
+require explicit bridging rules (synchronization, trust, observer
+alignment) that are domain-specific. Any such extension is outside the
+core system.
+\end{remark}
+
+\section{Consequence Relations}
+\label{sec:consequence}
+
+We take $\Tv$ as the sole designated value. (Designating $\{\Tv, \Uv\}$
+gives Priest's LP~\cite{priest1979}, a different logic; see
+Section~\ref{sec:related}.)
+
+\begin{definition}[Local satisfaction]
+Let $\mathcal{M} = (\mathcal{F}, V)$ be a model and $\frm$ a point. We say
+$\varphi$ is \emph{satisfied at} $\frm$ in $\mathcal{M}$, written
+$\mathcal{M}, \frm \entails \varphi$, iff $\Vh(\varphi, l, \theta, o) = \Tv$.
+\end{definition}
+
+\begin{definition}[Consequence]
+Let $\Gamma \subseteq \mathcal{L}$ and $\varphi \in \mathcal{L}$.
+\begin{itemize}
+  \item \emph{Local entailment at} $\frm$ in $\mathcal{M}$:
+  $\Gamma \entails_{\mathcal{M}, \frm} \varphi$ iff
+  $\mathcal{M}, \frm \entails \gamma$ for every $\gamma \in \Gamma$ implies
+  $\mathcal{M}, \frm \entails \varphi$.
+  \item \emph{Universal entailment}: $\Gamma \entails \varphi$ iff
+  $\Gamma \entails_{\mathcal{M}, \frm} \varphi$ for every model
+  $\mathcal{M}$ and every point $\frm$ of $\mathcal{M}$.
+\end{itemize}
+\end{definition}
+
+These are the standard $K_3$-style consequence relations, lifted point-wise
+over the frame.
+
+\section{Properties}
+\label{sec:properties}
+
+We collect the basic meta-theoretic properties of LTO-K3. The proofs are
+short because the semantics is point-wise: at each fixed $\frm$ the system
+collapses to ordinary $K_3$, so every $K_3$ identity lifts.
+
+\begin{lemma}[Locality]\label{lem:locality}
+For every model $\mathcal{M}$, every formula $\varphi$, and every point
+$\frm$, the value $\Vh(\varphi, l, \theta, o)$ depends only on the
+restriction of $V$ to $\mathrm{AP}(\varphi) \times \{l\} \times \{\theta\}
+\times \{o\}$.
+\end{lemma}
+
+\begin{proof}
+Structural induction on $\varphi$. The base case ($\varphi = p$) is
+immediate by the definition of $\Vh$ on atoms. For each compound case
+$\varphi = \lnot\psi$, $\psi \land \chi$, $\psi \lor \chi$, $\psi \to \chi$,
+the value at $\frm$ is a function (the corresponding Kleene connective) of
+$\Vh(\psi, l, \theta, o)$ and possibly $\Vh(\chi, l, \theta, o)$, which by
+the induction hypothesis depend only on $V$ restricted as claimed.
+$\mathrm{AP}(\varphi)$ is the union of the $\mathrm{AP}$ of its
+sub-formulas, so the restriction propagates. \qedhere
+\end{proof}
+
+\begin{proposition}[Information-monotonicity]\label{prop:mono}
+Let $V_1, V_2$ be base valuations on the same frame with
+$V_1(p, l, \theta, o) \sqsubseteq V_2(p, l, \theta, o)$ for every atom and
+every point. Then for every formula $\varphi$ and every point $\frm$,
+$\Vh_1(\varphi, l, \theta, o) \sqsubseteq \Vh_2(\varphi, l, \theta, o)$.
+\end{proposition}
+
+\begin{proof}
+Structural induction, using that $\lnot_{K_3}, \land_{K_3}, \lor_{K_3},
+\to_{K_3}$ are each monotone in $\sqsubseteq$ in each argument (a standard
+$K_3$ result, verified by inspection of the truth tables).
+\end{proof}
+
+\begin{corollary}[Conservativity over classical logic]\label{cor:cons}
+Let $\mathcal{M}$ be a model in which $V$ never takes the value $\Uv$.
+Then for every formula $\varphi$ and every point $\frm$,
+$\Vh(\varphi, l, \theta, o) \in \{\Tv, \Fv\}$, and the resulting value
+coincides with the classical (two-valued) valuation of $\varphi$ under the
+same atomic assignment.
+\end{corollary}
+
+\begin{proof}
+By Proposition~\ref{prop:mono} and inspection of the Kleene tables: when
+neither input is $\Uv$, every Kleene connective returns the classical
+value.
+\end{proof}
+
+\begin{proposition}[De Morgan laws]\label{prop:demorgan}
+For all formulas $\varphi, \psi$ and all $\frm$,
+\begin{align*}
+\Vh(\lnot(\varphi \land \psi), l, \theta, o) &= \Vh(\lnot\varphi \lor \lnot\psi, l, \theta, o), \\
+\Vh(\lnot(\varphi \lor \psi), l, \theta, o) &= \Vh(\lnot\varphi \land \lnot\psi, l, \theta, o).
+\end{align*}
+\end{proposition}
+
+\begin{proof}
+By case analysis on $(\Vh(\varphi), \Vh(\psi)) \in \Vals \times \Vals$
+(nine cases per identity). Each case checks directly against the truth
+tables of Section~\ref{sec:prelim}.
+\end{proof}
+
+\begin{proposition}[Double negation, idempotence, commutativity, associativity]\label{prop:basic}
+For all $\varphi, \psi, \chi$ and all $\frm$, $\Vh$ satisfies:
+$\lnot\lnot\varphi \equiv \varphi$;\;
+$\varphi \land \varphi \equiv \varphi$;\;
+$\varphi \lor \varphi \equiv \varphi$;\;
+$\varphi \land \psi \equiv \psi \land \varphi$;\;
+$\varphi \lor \psi \equiv \psi \lor \varphi$;\;
+$(\varphi \land \psi) \land \chi \equiv \varphi \land (\psi \land \chi)$;\;
+$(\varphi \lor \psi) \lor \chi \equiv \varphi \lor (\psi \lor \chi)$,
+where $\equiv$ means equality of $\Vh$-values at every point of every
+model.
+\end{proposition}
+
+\begin{proof}
+Each is a finite truth-table check, lifted point-wise via
+Lemma~\ref{lem:locality}.
+\end{proof}
+
+\begin{theorem}[No universal $\Tv$-tautologies]\label{thm:notaut}
+There is no formula $\varphi \in \mathcal{L}$ such that
+$\entails \varphi$ (i.e., $\Vh(\varphi, l, \theta, o) = \Tv$ in every model
+at every point).
+\end{theorem}
+
+\begin{proof}
+Consider the model $\mathcal{M}_\Uv$ on any frame with
+$V(p, l, \theta, o) = \Uv$ for every atom $p$ and every point. By
+induction on $\varphi$, using the Kleene tables (each connective returns
+$\Uv$ when all inputs are $\Uv$), $\Vh(\varphi, l, \theta, o) = \Uv$ for
+every $\varphi$ and every $\frm$. Hence no formula evaluates to $\Tv$
+universally. This re-derives, in the indexed setting, the well-known
+absence of $K_3$-tautologies under designated value $\Tv$~\cite{kleene1952}.
+\end{proof}
+
+\begin{corollary}[Failure of LEM and of contradiction]\label{cor:lem}
+$\not\entails p \lor \lnot p$ and $\not\entails \lnot(p \land \lnot p)$.
+\end{corollary}
+
+\begin{proof}
+Take $\mathcal{M}_\Uv$ as in Theorem~\ref{thm:notaut}: both formulas
+evaluate to $\Uv$, not $\Tv$.
+\end{proof}
+
+\begin{remark}
+Theorem~\ref{thm:notaut} is the price of taking $\Tv$ as the sole
+designated value in $K_3$. It does not mean the logic is useless---it
+means valid \emph{inferences} (consequences from non-empty $\Gamma$) are
+the appropriate notion of validity. For example, $\{p, p \to q\} \entails
+q$ holds: by inspection of the implication and conjunction tables, whenever
+$\Vh(p) = \Vh(p \to q) = \Tv$, we have $\Vh(q) = \Tv$.
+\end{remark}
+
+\section{Worked Example}
+\label{sec:example}
+
+Let $L = \{l_{\mathrm{EU}}, l_{\mathrm{US}}\}$, $\Theta = \{\theta_0,
+\theta_1\}$, $O = \{o_{\mathrm{Alice}}, o_{\mathrm{Bob}}\}$. Let $p$ be the
+atomic proposition ``the package has been delivered'' and $q$ ``the package
+has cleared customs.'' A possible base valuation:
+\begin{center}
+\small
+\begin{tabular}{lll|cc}
+\toprule
+$l$ & $\theta$ & $o$ & $V(p)$ & $V(q)$ \\
+\midrule
+$l_{\mathrm{EU}}$ & $\theta_0$ & $o_{\mathrm{Alice}}$ & $\Uv$ & $\Fv$ \\
+$l_{\mathrm{EU}}$ & $\theta_1$ & $o_{\mathrm{Alice}}$ & $\Tv$ & $\Tv$ \\
+$l_{\mathrm{EU}}$ & $\theta_1$ & $o_{\mathrm{Bob}}$   & $\Uv$ & $\Tv$ \\
+$l_{\mathrm{US}}$ & $\theta_1$ & $o_{\mathrm{Alice}}$ & $\Fv$ & $\Uv$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+Then at $(l_{\mathrm{EU}}, \theta_1, o_{\mathrm{Alice}})$,
+$\Vh(p \land q) = \Tv$ (Alice in the EU at $\theta_1$ knows both); at
+$(l_{\mathrm{EU}}, \theta_1, o_{\mathrm{Bob}})$, $\Vh(p \land q) = \Uv$
+(Bob does not yet know whether the package has been delivered, even though
+he knows it has cleared customs); at $(l_{\mathrm{US}}, \theta_1,
+o_{\mathrm{Alice}})$, $\Vh(p \land q) = \Fv$ (the proposition is false in
+the US frame because $\Vh(p) = \Fv$). Different points yield different
+truth values for \emph{the same formula}---this is the design.
+
+\section{Related Work}
+\label{sec:related}
+
+The components of LTO-K3 are each well-studied.
+
+\paragraph{Three-valued logics.} $K_3$~\cite{kleene1952} is one of several
+three-valued logics with different motivations and different
+connectives. {\L}ukasiewicz $\text{\L}_3$~\cite{lukasiewicz1920} differs
+from $K_3$ in implication: $\Uv \to_{\text{\L}_3} \Uv = \Tv$, which
+yields the tautology $p \to p$ and other classical theorems. Bochvar's
+internal $B_3$~\cite{bochvar1981} is ``infectious'': any operation with a
+$\Uv$ input returns $\Uv$, even $\Tv \lor \Uv$. Priest's
+LP~\cite{priest1979} uses the Kleene tables but designates
+$\{\Tv, \Uv\}$, yielding a paraconsistent logic in which contradictions can
+be true and LEM holds. Belnap's $\mathbf{FOUR}$~\cite{belnap1977} adds a
+fourth value (``both true and false'') and is appropriate when contradictory
+information is to be tolerated rather than collapsed to $\Uv$.
+
+We choose $K_3$ with designated value $\Tv$ because the reading of $\Uv$ we
+want is purely epistemic (``not yet known'') and information-monotonic
+(Proposition~\ref{prop:mono}): resolving an $\Uv$ to a classical value
+never overturns a previously determined truth. $\text{\L}_3$ breaks this
+property (its implication is not monotone in the obvious sense); LP changes
+the designated set; $B_3$ propagates $\Uv$ too aggressively for our use
+case; $\mathbf{FOUR}$ conflates uncertainty with inconsistency.
+
+\paragraph{Temporal and modal logics.} Prior~\cite{prior1957} introduced
+tense operators; Pnueli~\cite{pnueli1977} introduced LTL for program
+verification; Clarke and Emerson~\cite{clarke1981} introduced CTL. These
+logics index truth by time (or by states reachable in time) but use
+classical two-valued semantics and quantify over states with modal
+operators. Kripke~\cite{kripke1963} gave possible-worlds semantics for
+modal logic; the entire modal-logic
+tradition~\cite{blackburn2001} indexes truth by worlds and uses
+$\Box, \Diamond$ to quantify over them. Hybrid
+logic~\cite{areces2007hybrid} adds nominals $i$ and the operator $@_i$ to
+refer to specific worlds in the object language. LTO-K3 differs by
+\emph{not} quantifying over points in the object language at all---there
+are no $\Box, \Diamond, \mathsf{F}, \mathsf{G}, K_o, @_i$. Indices live
+only in the meta-language.
+
+\paragraph{Epistemic logics.} Hintikka~\cite{hintikka1962} introduced
+epistemic modal logic with $K_a$ operators. The textbook treatment is
+Fagin et al.~\cite{fagin1995}. Multi-agent epistemic temporal logic
+combines these dimensions, but again with two-valued semantics and modal
+operators. Three-valued epistemic logics exist but are typically formulated
+with modal operators rather than as a flat indexed valuation.
+
+\paragraph{Three-valued spatio-temporal and runtime-verification logics.}
+Bauer et al.~\cite{bauer2011rv} developed LTL$_3$, a three-valued LTL
+variant for runtime monitoring with truth values true, false, and
+inconclusive. Spatial logics~\cite{aiello2007handbook} introduce explicit
+spatial indices for reasoning about topological structure. These works are
+the closest neighbours of LTO-K3.
+
+\paragraph{Honest positioning.} Relative to the above, LTO-K3 is best read
+as a deliberately impoverished system. It has fewer expressive resources
+than hybrid logic, fewer than multi-modal epistemic temporal logic, and
+fewer than LTL$_3$. What it offers in return is a uniform treatment of
+three indices (location, time, observer) as concrete and equally
+first-class, and a self-contained semantics that fits on a page. We make
+no claim that LTO-K3 supersedes any of these systems; we claim only that it
+is a useful \emph{starting point} when their full machinery is not
+required.
+
+\section{Limitations}
+\label{sec:limitations}
+
+\begin{enumerate}
+  \item \textbf{No cross-frame operators.} LTO-K3 cannot express ``$\varphi$
+  at $l_1$ implies $\psi$ at $l_2$'' or ``$\varphi$ now will be $\psi$
+  later.'' Such statements require modal operators, hybrid nominals, or
+  explicit bridging rules, none of which are part of the core.
+  \item \textbf{No quantification.} LTO-K3 cannot express
+  ``$\varphi$ holds for some observer'' or ``$\varphi$ holds at all
+  times.'' These require either propositional quantifiers or
+  meta-quantification.
+  \item \textbf{Structure on $L, \Theta, O$ is invisible.} Time is not
+  ordered, locations are not topologized, observers do not have
+  information-state relations. Any such structure must be added by an
+  extension and cannot be queried within $\mathcal{L}$.
+  \item \textbf{No $\Tv$-tautologies} (Theorem~\ref{thm:notaut}). Validity
+  must be reasoned about via non-trivial entailments, not via tautologies.
+  Users accustomed to classical-logic tautological reasoning will need to
+  adjust.
+  \item \textbf{$\Uv$ is undifferentiated.} ``Not yet known'', ``in
+  principle unknowable'', and ``not yet defined'' are collapsed into a
+  single value. Distinguishing them requires a richer truth-value set
+  (e.g.,~\cite{belnap1977}) or a probabilistic / possibilistic layer.
+  \item \textbf{No interaction between observers.} There is no notion of
+  ``$o_1$ knows that $o_2$ knows $\varphi$''; that requires an explicit
+  $K_o$ operator and is intentionally outside scope.
+  \item \textbf{The cross-frame undefinedness is a restriction, not a
+  feature.} We have framed it as a deliberate design choice, and it is, but
+  it is also a real expressive limitation. Users who need cross-frame
+  reasoning will need to layer on additional machinery.
+\end{enumerate}
 
 \section{Conclusion}
-We have presented a minimal three-valued logic in which every proposition is
-evaluated under an explicit triple of location, time, and observer. The
-resulting system is small enough to be specified on a single page, yet
-expressive enough to capture partial knowledge under spatial, temporal, and
-epistemic context. Cross-frame composition is intentionally left to future,
-domain-specific extensions.
+We have presented LTO-K3, a minimal three-valued logic in which every
+proposition is evaluated under an explicit triple of location, time, and
+observer. The system is a careful packaging of standard
+ingredients---Kleene's $K_3$, indexed valuations, designated-value
+consequence---into a single self-contained core, together with a small
+body of meta-theoretic properties (locality, monotonicity,
+conservativity, De~Morgan, absence of $\Tv$-tautologies). We have been
+explicit about what is new (the packaging) and what is not (everything
+else), and have named the system's limitations. Cross-frame composition,
+quantification, and modal operators are deliberate omissions to be
+addressed by domain-specific extensions.
 
-\begin{thebibliography}{9}
+\begin{thebibliography}{99}
+
 \bibitem{lukasiewicz1920}
-J.~{\L}ukasiewicz, \emph{O logice tr\'ojwarto\'sciowej} [On three-valued
-logic], Ruch Filozoficzny, vol.~5, pp.~169--171, 1920.
+J.~{\L}ukasiewicz, ``O logice tr\'ojwarto\'sciowej'' [On three-valued
+logic], \emph{Ruch Filozoficzny}, vol.~5, pp.~169--171, 1920.
 
 \bibitem{kleene1952}
-S.~C. Kleene, \emph{Introduction to Metamathematics}, North-Holland, 1952.
+S.~C. Kleene, \emph{Introduction to Metamathematics}, North-Holland,
+Amsterdam, 1952.
 
 \bibitem{prior1957}
-A.~N. Prior, \emph{Time and Modality}, Oxford University Press, 1957.
+A.~N. Prior, \emph{Time and Modality}, Oxford University Press, Oxford,
+1957.
 
 \bibitem{hintikka1962}
-J.~Hintikka, \emph{Knowledge and Belief: An Introduction to the Logic of the
-Two Notions}, Cornell University Press, 1962.
+J.~Hintikka, \emph{Knowledge and Belief: An Introduction to the Logic of
+the Two Notions}, Cornell University Press, Ithaca, NY, 1962.
 
 \bibitem{kripke1963}
 S.~A. Kripke, ``Semantical considerations on modal logic,''
 \emph{Acta Philosophica Fennica}, vol.~16, pp.~83--94, 1963.
+
+\bibitem{belnap1977}
+N.~D. Belnap, ``A useful four-valued logic,'' in J.~M. Dunn and
+G.~Epstein, eds., \emph{Modern Uses of Multiple-Valued Logic}, Reidel,
+Dordrecht, pp.~5--37, 1977.
+
+\bibitem{pnueli1977}
+A.~Pnueli, ``The temporal logic of programs,'' in \emph{Proc.\ 18th
+Annual Symposium on Foundations of Computer Science (FOCS)}, IEEE,
+pp.~46--57, 1977.
+
+\bibitem{priest1979}
+G.~Priest, ``The logic of paradox,'' \emph{Journal of Philosophical
+Logic}, vol.~8, no.~1, pp.~219--241, 1979.
+
+\bibitem{bochvar1981}
+D.~A. Bochvar, ``On a three-valued logical calculus and its application to
+the analysis of the paradoxes of the classical extended functional
+calculus,'' translated by M.~Bergmann, \emph{History and Philosophy of
+Logic}, vol.~2, pp.~87--112, 1981 (original Russian 1938).
+
+\bibitem{clarke1981}
+E.~M. Clarke and E.~A. Emerson, ``Design and synthesis of synchronization
+skeletons using branching-time temporal logic,'' in \emph{Logics of
+Programs}, LNCS 131, Springer, pp.~52--71, 1981.
+
+\bibitem{fagin1995}
+R.~Fagin, J.~Y. Halpern, Y.~Moses, and M.~Y. Vardi, \emph{Reasoning About
+Knowledge}, MIT Press, Cambridge, MA, 1995.
+
+\bibitem{blackburn2001}
+P.~Blackburn, M.~de~Rijke, and Y.~Venema, \emph{Modal Logic}, Cambridge
+University Press, Cambridge, 2001.
+
+\bibitem{aiello2007handbook}
+M.~Aiello, I.~Pratt-Hartmann, and J.~van~Benthem, eds., \emph{Handbook of
+Spatial Logics}, Springer, Dordrecht, 2007.
+
+\bibitem{areces2007hybrid}
+C.~Areces and B.~ten~Cate, ``Hybrid logics,'' in P.~Blackburn,
+J.~van~Benthem, and F.~Wolter, eds., \emph{Handbook of Modal Logic},
+Elsevier, pp.~821--868, 2007.
+
+\bibitem{bauer2011rv}
+A.~Bauer, M.~Leucker, and C.~Schallhart, ``Runtime verification for
+LTL and TLTL,'' \emph{ACM Transactions on Software Engineering and
+Methodology}, vol.~20, no.~4, art.~14, 2011.
+
 \end{thebibliography}
 
 \end{document}
