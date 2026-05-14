@@ -21,6 +21,7 @@
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
 \newtheorem{example}[definition]{Example}
+\newtheorem{notation}[definition]{Notation}
 
 \theoremstyle{plain}
 \newtheorem{lemma}[definition]{Lemma}
@@ -38,6 +39,11 @@
 \newcommand{\Vh}{\widehat{V}}
 \newcommand{\frm}{(l, \theta, o)}
 \newcommand{\entails}{\vDash}
+\newcommand{\eqv}{\equiv}
+\newcommand{\Lang}{\mathcal{L}}
+\newcommand{\AP}{\mathrm{AP}}
+\newcommand{\Mod}{\mathcal{M}}
+\newcommand{\Frame}{\mathcal{F}}
 
 \title{Location, Time, and Observer Based Three-Valued Logic:\\
 A Minimal Formal System Where Truth is Never Absolute}
@@ -53,20 +59,24 @@ We present \textbf{LTO-K3}, a minimal formal system in which the truth value
 of a proposition is never absolute but is always evaluated with respect to
 three explicit parameters: a \emph{location}, a \emph{time}, and an
 \emph{observer}. The system admits exactly three truth values---$\Tv$~(true),
-$\Fv$~(false), and $\Uv$~(unknown)---composed via Kleene's strong three-valued
-connectives. We give a formal syntax, a compositional point-wise semantics
-$\Vh : \mathcal{L} \times L \times \Theta \times O \to \Vals$, two consequence
-relations (local and universal), and prove a small body of results:
-information-monotonicity, conservativity over classical logic, locality,
-absence of $\Tv$-tautologies (a known property of $K_3$ that we re-derive in
-the indexed setting), and the De~Morgan laws. We are careful to distinguish
-what is genuinely new (the \emph{packaging}: location and observer as
-non-optional, concrete parameters; a deliberate refusal to introduce modal
-operators) from what is inherited from established work (Kleene
-semantics~\cite{kleene1952}, modal/temporal/epistemic
-indexing~\cite{prior1957,hintikka1962,kripke1963}, three-valued spatio-temporal
-logics in verification). The contribution is therefore a careful synthesis,
-not a discovery, and we name its limitations explicitly.
+$\Fv$~(false), and $\Uv$~(unknown)---composed via Kleene's strong
+three-valued connectives. We give a formal syntax, a compositional
+point-wise semantics
+$\Vh : \Lang \times L \times \Theta \times O \to \Vals$,
+two consequence relations (local and universal), and prove a small body of
+results: uniqueness of the extended valuation, locality,
+information-monotonicity, conservativity over classical logic, replacement
+of equivalents, the De~Morgan laws, the absence of $\Tv$-tautologies, and a
+reduction theorem that shows LTO-K3 at a fixed point is exactly Kleene's
+$K_3$. From the reduction theorem we inherit decidability, the
+co-NP-completeness of consequence, and the existence of sound and complete
+proof systems. We are careful to distinguish what is genuinely new (the
+\emph{packaging}: location and observer as non-optional, concrete
+parameters; a deliberate refusal to introduce modal operators) from what is
+inherited from established work~\cite{kleene1952,lukasiewicz1920,prior1957,
+hintikka1962,kripke1963}. The contribution is therefore a careful synthesis
+with explicit, proven properties, not a discovery, and we name its
+limitations explicitly.
 \end{abstract}
 
 \noindent\textbf{Keywords:} three-valued logic, Kleene logic, indexed
@@ -74,64 +84,78 @@ semantics, temporal logic, epistemic logic, contextual semantics, partial
 information.
 
 \section{Introduction}
+\label{sec:intro}
+
 Classical two-valued logic forces every proposition into one of two states:
 \emph{true} or \emph{false}. In many practical settings---verification of
-distributed systems, knowledge representation, robotics, legal reasoning, data
-quality---this dichotomy is too coarse. Truth often depends on \emph{where} an
-evaluation is performed, \emph{when} it is performed, and \emph{who} performs
-it, and in many cases the evaluator simply does not know.
+distributed systems, knowledge representation, robotics, legal reasoning,
+data quality---this dichotomy is too coarse. Truth often depends on
+\emph{where} an evaluation is performed, \emph{when} it is performed, and
+\emph{who} performs it, and in many cases the evaluator simply does not
+know.
 
 We introduce a minimal logic, \textbf{LTO-K3} (Location, Time, Observer;
 Kleene three-valued), that takes these dependencies as primitive. Every
-atomic proposition is evaluated under an explicit tuple $\frm$ of location,
-time, and observer, and may take one of three values: true, false, or
-unknown. Compound formulas are evaluated point-wise via Kleene's strong
-three-valued tables.
+atomic proposition is evaluated under an explicit tuple
+$\frm$ of location, time, and observer, and takes one of three values:
+true, false, or unknown. Compound formulas are evaluated point-wise via
+Kleene's strong three-valued tables.
 
-The system is intentionally austere. It contains no modal operators, no
-accessibility relations, no transition systems, and no quantification over
-locations, times, or observers. Its purpose is to serve as a compact,
-unambiguous core on which richer domain-specific layers (synchronization,
-trust, frame alignment, modal operators) may later be built.
+The system is intentionally austere: no modal operators, no accessibility
+relations, no transition systems, no quantification over locations, times,
+or observers. Its purpose is to serve as a compact, unambiguous core on
+which richer domain-specific layers may be built.
 
 \paragraph{Contributions.}
 \begin{enumerate}
   \item A formal syntax and compositional point-wise semantics for a
-  three-valued indexed logic over $(L, \Theta, O)$ frames (Sections~\ref{sec:syntax}--\ref{sec:semantics}).
-  \item Two consequence relations---local at a frame and universal across
-  frames---based on the designated value $\Tv$ (Section~\ref{sec:consequence}).
-  \item A small body of meta-theoretic results (Section~\ref{sec:properties}):
-  information-monotonicity, locality, conservativity over classical logic,
-  De~Morgan laws, and the absence of $\Tv$-tautologies in the unindexed
-  fragment.
-  \item An explicit comparison with the closest neighbours: Kleene $K_3$,
-  {\L}ukasiewicz $\text{\L}_3$, Belnap's $\mathbf{FOUR}$, Priest's LP,
-  Bochvar $B_3$, hybrid logic, and multi-agent epistemic temporal logic
+  three-valued indexed logic over $(L, \Theta, O)$ frames
+  (Sections~\ref{sec:syntax}--\ref{sec:semantics}).
+  \item A \emph{reduction theorem} (Theorem~\ref{thm:reduction}) showing
+  that at every fixed point $\frm$, LTO-K3 is exactly Kleene's $K_3$,
+  whence all meta-theoretic results for $K_3$ lift to LTO-K3.
+  \item Two consequence relations---local at a point and universal across
+  models and points---together with an explicit example separating them
+  (Section~\ref{sec:consequence}).
+  \item A small body of meta-theoretic results
+  (Section~\ref{sec:properties}): uniqueness, locality,
+  information-monotonicity, conservativity over classical logic,
+  replacement of equivalents, De~Morgan laws, absence of $\Tv$-tautologies.
+  \item Decidability and complexity results
+  (Section~\ref{sec:complexity}): model checking is linear; local and
+  universal consequence are co-NP-complete; sound and complete proof
+  systems exist (inherited from $K_3$).
+  \item A worked example (Section~\ref{sec:example}) and an explicit
+  comparison with the closest neighbours: Kleene $K_3$,
+  {\L}ukasiewicz $\text{\L}_3$, Bochvar $B_3$, Priest's LP, Belnap's
+  $\mathbf{FOUR}$, hybrid logic, and multi-agent epistemic temporal logic
   (Section~\ref{sec:related}).
   \item A frank limitations section (Section~\ref{sec:limitations}).
 \end{enumerate}
 
 \paragraph{What is and is not new.}
 None of the parts is new. Three-valued logics go back to
-{\L}ukasiewicz~\cite{lukasiewicz1920} and Kleene~\cite{kleene1952}. Temporal
-indexing goes back to Prior~\cite{prior1957}; possible-worlds indexing to
-Kripke~\cite{kripke1963}; agent indexing to Hintikka~\cite{hintikka1962} and,
-in computer science, to Fagin~et~al.~\cite{fagin1995}. What is new is the
-\emph{packaging}: making location, time, and observer all simultaneously
-non-optional, concrete, first-class parameters of a single valuation
-function, and deliberately refusing to lift them with modal operators. We
-state this honestly throughout.
+{\L}ukasiewicz~\cite{lukasiewicz1920} and Kleene~\cite{kleene1952}.
+Temporal indexing goes back to Prior~\cite{prior1957}; possible-worlds
+indexing to Kripke~\cite{kripke1963}; agent indexing to
+Hintikka~\cite{hintikka1962} and, in computer science, to
+Fagin~et~al.~\cite{fagin1995}. Sound and complete proof systems for $K_3$
+(tableaux, signed-clause resolution) are well known~\cite{hahnle1993}.
+What is new is the \emph{packaging}: location, time, and observer are
+simultaneously non-optional, concrete, first-class parameters of a single
+valuation function, and we deliberately refuse to lift them with modal
+operators. The reduction theorem makes precise the sense in which our
+contribution is a packaging and not a new logic.
 
 \section{Preliminaries: Kleene's Strong Three-Valued Logic}
 \label{sec:prelim}
 
 Kleene's strong three-valued logic $K_3$~\cite{kleene1952} extends classical
-two-valued logic with a third value $\Uv$ (``unknown'' or ``undefined'') and
-defines the connectives so that $\Uv$ propagates conservatively: a connective
-returns $\Tv$ (resp.\ $\Fv$) iff every way of resolving each $\Uv$ to $\Tv$
-or $\Fv$ would yield $\Tv$ (resp.\ $\Fv$); otherwise it returns $\Uv$. This
-``supervaluation-like'' character is what makes $K_3$ the natural choice
-when $\Uv$ is read epistemically as ``not yet known''. The truth tables are:
+two-valued logic with a third value $\Uv$ (``unknown'' / ``undefined'') and
+defines the connectives so that $\Uv$ propagates conservatively: a
+connective returns $\Tv$ (resp.\ $\Fv$) iff every way of resolving each
+$\Uv$ to $\Tv$ or $\Fv$ would yield $\Tv$ (resp.\ $\Fv$); otherwise it
+returns $\Uv$. The truth tables are:
 
 \begin{center}
 $\begin{array}{c|ccc}
@@ -151,7 +175,15 @@ p & \lnot p \\ \hline
 \Tv & \Fv \\
 \Uv & \Uv \\
 \Fv & \Tv
-\end{array}$\qquad
+\end{array}$
+\end{center}
+
+We treat material implication as a defined abbreviation: $\varphi \to
+\psi \;:=\; \lnot\varphi \lor \psi$. This is strong-Kleene implication;
+{\L}ukasiewicz's $\text{\L}_3$ uses a different connective, where
+$\Uv \to_{\text{\L}_3} \Uv = \Tv$ rather than $\Uv$ (see
+Section~\ref{sec:related}). The induced truth table for $\to$ is:
+\begin{center}
 $\begin{array}{c|ccc}
 \to & \Tv & \Uv & \Fv \\ \hline
 \Tv & \Tv & \Uv & \Fv \\
@@ -160,47 +192,47 @@ $\begin{array}{c|ccc}
 \end{array}$
 \end{center}
 
-Material implication is defined as $\varphi \to \psi \;:=\; \lnot \varphi
-\lor \psi$. We use this strong-Kleene implication throughout; for the
-contrast with {\L}ukasiewicz's $\text{\L}_3$ (where $\Uv \to \Uv = \Tv$) see
-Section~\ref{sec:related}.
-
 \paragraph{Information ordering.}
 Define the partial order $\sqsubseteq$ on $\Vals$ by $\Uv \sqsubseteq \Tv$,
 $\Uv \sqsubseteq \Fv$, and $x \sqsubseteq x$ for all $x$; $\Tv$ and $\Fv$
 are incomparable. Intuitively, $x \sqsubseteq y$ means ``$y$ contains at
 least as much information as $x$.'' All Kleene connectives are
-\emph{monotone} in $\sqsubseteq$ component-wise---resolving an $\Uv$ to
-$\Tv$ or $\Fv$ never reverses an already-determined truth value. This
-monotonicity is the formal reason $K_3$ is appropriate when $\Uv$ denotes
-epistemic uncertainty.
+\emph{monotone} in $\sqsubseteq$ component-wise: resolving an $\Uv$ to
+$\Tv$ or $\Fv$ never reverses an already-determined value. This is the
+formal reason $K_3$ is appropriate when $\Uv$ denotes epistemic
+uncertainty.
+
+\paragraph{Functional incompleteness.}
+$K_3$ is not functionally complete on $\Vals$: every formula built from
+$\{\lnot, \land, \lor\}$ over atoms valued $\Uv$ evaluates to $\Uv$
+(immediate from the truth tables). In particular there are no constants
+$\Tv, \Fv$ definable from the connectives alone. This fact underlies the
+absence of $\Tv$-tautologies (Theorem~\ref{thm:notaut}).
 
 \section{Syntax}
 \label{sec:syntax}
 
-Fix a countably infinite set $\mathrm{AP}$ of \emph{atomic propositions}
-$p, q, r, \ldots$. The language $\mathcal{L}$ is generated by the grammar
+Fix a countably infinite set $\AP$ of \emph{atomic propositions}
+$p, q, r, \ldots$. The language $\Lang$ is generated by the grammar
 \[
 \varphi, \psi \;::=\; p \;\mid\; \lnot\varphi \;\mid\; (\varphi \land \psi)
-\;\mid\; (\varphi \lor \psi) \;\mid\; (\varphi \to \psi),
-\qquad p \in \mathrm{AP}.
+\;\mid\; (\varphi \lor \psi),
+\qquad p \in \AP.
 \]
 We omit parentheses under the usual precedence
-$\lnot > \land > \lor > {\to}$. The language has no constants, no
-biconditional, and no quantifiers. The set of atomic propositions occurring
-in $\varphi$ is written $\mathrm{AP}(\varphi)$.
+$\lnot > \land > \lor$, and use $\varphi \to \psi$ as an abbreviation for
+$\lnot\varphi \lor \psi$. The set of atomic propositions occurring in
+$\varphi$ is written $\AP(\varphi)$.
 
 \begin{remark}
-The biconditional $\varphi \leftrightarrow \psi$ and the quantifiers
-$\forall, \exists$ are deliberately omitted. The biconditional can be
-defined as $(\varphi \to \psi) \land (\psi \to \varphi)$ but its $K_3$
-behaviour is non-standard (it is not the equivalence relation classically
-expected) and we prefer to omit it from the core. Quantifiers would force a
-domain commitment and are orthogonal to the indexing concern of this paper.
-Crucially, the language contains \emph{no modal operators} indexed over
-$L$, $\Theta$, or $O$ (no $\Box_l$, no $\mathsf{F}\theta$, no
-$K_o\varphi$). This is the essential design choice: indices appear in the
-meta-language (the semantics), not in the object language.
+The biconditional $\leftrightarrow$ and the quantifiers $\forall, \exists$
+are deliberately omitted. The biconditional could be defined as
+$(\varphi \to \psi) \land (\psi \to \varphi)$ but its $K_3$ behaviour is
+non-standard and we prefer to omit it. Quantifiers would force a domain
+commitment orthogonal to indexing. Crucially, $\Lang$ contains \emph{no
+modal operators} indexed over $L, \Theta, O$ (no $\Box_l$, no
+$\mathsf{F}\theta$, no $K_o\varphi$). This is the essential design
+choice: indices appear in the meta-language, not in the object language.
 \end{remark}
 
 \section{Semantics}
@@ -209,219 +241,355 @@ meta-language (the semantics), not in the object language.
 \subsection{Frames and models}
 
 \begin{definition}[Frame]
-A \emph{frame} is a triple $\mathcal{F} = (L, \Theta, O)$ where $L$, $\Theta$,
+A \emph{frame} is a triple $\Frame = (L, \Theta, O)$ where $L$, $\Theta$,
 and $O$ are non-empty sets of \emph{locations}, \emph{times}, and
 \emph{observers}, respectively. We call $\frm \in L \times \Theta \times O$
 a \emph{point} of the frame.
 \end{definition}
 
-We impose no structure on $L$, $\Theta$, or $O$. In particular $\Theta$ is
-not required to be ordered, $L$ not required to carry a topology, and $O$
-not required to carry an information-state relation. Any such structure is
-a domain-specific extension; see Section~\ref{sec:limitations}.
+We impose no structure on $L$, $\Theta$, or $O$: $\Theta$ is not required
+to be ordered, $L$ not required to carry a topology, $O$ not required to
+carry an information-state relation. Any such structure is a
+domain-specific extension; see Section~\ref{sec:limitations}.
 
 \begin{definition}[Model]
-An \emph{LTO-K3 model} is a pair $\mathcal{M} = (\mathcal{F}, V)$ where
-$\mathcal{F} = (L, \Theta, O)$ is a frame and
+An \emph{LTO-K3 model} is a pair $\Mod = (\Frame, V)$ where
+$\Frame = (L, \Theta, O)$ is a frame and
 \[
-V : \mathrm{AP} \times L \times \Theta \times O \;\longrightarrow\; \Vals
+V : \AP \times L \times \Theta \times O \;\longrightarrow\; \Vals
 \]
-is a \emph{base valuation} that assigns a truth value to each atomic
-proposition at each point. Note that $V$ is total: every atomic proposition
-has a value (possibly $\Uv$) at every point.
+is a total \emph{base valuation} assigning a truth value to each atomic
+proposition at each point.
 \end{definition}
 
 \subsection{Compositional valuation}
 
-The base valuation $V$ extends uniquely to a valuation $\Vh$ on all formulas
-by structural recursion using the Kleene tables of Section~\ref{sec:prelim}.
-
 \begin{definition}[Extended valuation]
-Let $\mathcal{M} = (\mathcal{F}, V)$ be a model with $\mathcal{F} =
-(L, \Theta, O)$. The \emph{extended valuation}
-$\Vh : \mathcal{L} \times L \times \Theta \times O \to \Vals$ is defined by
-recursion on $\varphi$:
+\label{def:extended}
+Let $\Mod = (\Frame, V)$ be a model. The \emph{extended valuation}
+$\Vh : \Lang \times L \times \Theta \times O \to \Vals$ is defined by
+structural recursion on $\varphi$:
 \begin{align*}
-\Vh(p, l, \theta, o) &\;=\; V(p, l, \theta, o), \quad p \in \mathrm{AP}, \\
+\Vh(p, l, \theta, o) &\;=\; V(p, l, \theta, o), \quad p \in \AP, \\
 \Vh(\lnot\varphi, l, \theta, o) &\;=\; \lnot_{K_3} \Vh(\varphi, l, \theta, o), \\
-\Vh(\varphi \land \psi, l, \theta, o) &\;=\; \Vh(\varphi, l, \theta, o) \land_{K_3} \Vh(\psi, l, \theta, o), \\
-\Vh(\varphi \lor \psi, l, \theta, o) &\;=\; \Vh(\varphi, l, \theta, o) \lor_{K_3} \Vh(\psi, l, \theta, o), \\
-\Vh(\varphi \to \psi, l, \theta, o) &\;=\; \Vh(\varphi, l, \theta, o) \to_{K_3} \Vh(\psi, l, \theta, o),
+\Vh(\varphi \land \psi, l, \theta, o) &\;=\; \Vh(\varphi, l, \theta, o)
+                                              \land_{K_3} \Vh(\psi, l, \theta, o), \\
+\Vh(\varphi \lor \psi, l, \theta, o) &\;=\; \Vh(\varphi, l, \theta, o)
+                                              \lor_{K_3} \Vh(\psi, l, \theta, o),
 \end{align*}
-where $\lnot_{K_3}, \land_{K_3}, \lor_{K_3}, \to_{K_3}$ are the connectives
-of Section~\ref{sec:prelim}.
+where $\lnot_{K_3}, \land_{K_3}, \lor_{K_3}$ are the Kleene connectives of
+Section~\ref{sec:prelim}.
 \end{definition}
 
-This is the entire semantics. Crucially, the recursion is \emph{point-wise}:
-both sides of every binary connective are evaluated at \emph{the same}
-point $\frm$. There is no syntactic mechanism in $\mathcal{L}$ for
-referring to a different point.
+\begin{proposition}[Existence and uniqueness of $\Vh$]
+\label{prop:unique}
+For every model $\Mod$, the function $\Vh$ defined in
+Definition~\ref{def:extended} exists and is unique.
+\end{proposition}
 
-\begin{remark}[Cross-frame composition]
-A natural question is how to combine $\Vh(\varphi, l_1, \theta_1, o_1)$
-with $\Vh(\psi, l_2, \theta_2, o_2)$. The answer in LTO-K3 is: \emph{the
-language does not express such combinations}. There is no formula whose
-two sub-formulas are evaluated at different points; the recursion above
-forces a single $\frm$ throughout. Defining cross-frame operators would
-require explicit bridging rules (synchronization, trust, observer
-alignment) that are domain-specific. Any such extension is outside the
-core system.
+\begin{proof}
+$\Lang$ is the absolutely free algebra on $\AP$ over the signature
+$\{\lnot, \land, \lor\}$ (with arities $1, 2, 2$). At each fixed point
+$\frm$, $(\Vals, \lnot_{K_3}, \land_{K_3}, \lor_{K_3})$ is an algebra of
+the same signature. The map $p \mapsto V(p, l, \theta, o)$ on generators
+extends, by the universal property of free algebras, to a unique
+homomorphism $\Vh(-, l, \theta, o) : \Lang \to \Vals$. Doing this at every
+point yields $\Vh$.
+\end{proof}
+
+Crucially, the recursion is \emph{point-wise}: both sides of every binary
+connective are evaluated at \emph{the same} point. There is no syntactic
+mechanism in $\Lang$ for referring to a different point.
+
+\begin{remark}[On cross-frame composition]
+$\Lang$ contains no formula whose two sub-formulas can be evaluated at
+different points; Definition~\ref{def:extended} forces a single $\frm$
+throughout. Defining cross-frame operators would require explicit
+bridging rules (synchronization, trust, observer alignment) that are
+domain-specific. Such extensions are outside the core system; see
+Section~\ref{sec:limitations}.
 \end{remark}
+
+\section{Reduction to Pointwise $K_3$}
+\label{sec:reduction}
+
+This section formalises the sense in which LTO-K3 is, at every fixed
+point, exactly Kleene's $K_3$. The reduction theorem is the central
+meta-fact of the paper: it lets us inherit completeness, decidability, and
+proof systems from $K_3$ without re-proving them.
+
+\begin{definition}[Point restriction]
+Let $\Mod = (\Frame, V)$ be a model and $\frm$ a point. The
+\emph{$K_3$-assignment induced at $\frm$} is the function
+$v_{\frm}^{\Mod} : \AP \to \Vals$ defined by
+$v_{\frm}^{\Mod}(p) = V(p, l, \theta, o)$.
+\end{definition}
+
+Let $\Vh_{K_3} : \Lang \times (\AP \to \Vals) \to \Vals$ denote the
+standard $K_3$ semantics: $\Vh_{K_3}(\varphi, v)$ is the value of
+$\varphi$ under the assignment $v$ using the Kleene tables.
+
+\begin{theorem}[Reduction]
+\label{thm:reduction}
+For every model $\Mod$, every formula $\varphi \in \Lang$, and every point
+$\frm$,
+\[
+\Vh(\varphi, l, \theta, o) \;=\; \Vh_{K_3}\bigl(\varphi,\, v_{\frm}^{\Mod}\bigr).
+\]
+\end{theorem}
+
+\begin{proof}
+Structural induction on $\varphi$. Base: for $p \in \AP$ both sides equal
+$V(p, l, \theta, o)$. Step: each compound case applies exactly the same
+Kleene connective on either side, and the induction hypothesis equates
+the sub-formula values. \qedhere
+\end{proof}
+
+\begin{corollary}[Inheritance from $K_3$]
+\label{cor:inherit}
+Every property of $K_3$ formulated in terms of a single assignment lifts
+point-wise to LTO-K3. In particular, the propositional fragment of LTO-K3
+inherits from $K_3$:
+\begin{enumerate}
+  \item the absence of $\Tv$-tautologies (Theorem~\ref{thm:notaut} below),
+  \item the existence of sound and complete proof systems
+  (tableaux, signed-clause resolution)~\cite{hahnle1993},
+  \item the co-NP-completeness of consequence (Section~\ref{sec:complexity}).
+\end{enumerate}
+\end{corollary}
 
 \section{Consequence Relations}
 \label{sec:consequence}
 
 We take $\Tv$ as the sole designated value. (Designating $\{\Tv, \Uv\}$
-gives Priest's LP~\cite{priest1979}, a different logic; see
-Section~\ref{sec:related}.)
+gives Priest's LP~\cite{priest1979}, a different logic.)
 
 \begin{definition}[Local satisfaction]
-Let $\mathcal{M} = (\mathcal{F}, V)$ be a model and $\frm$ a point. We say
-$\varphi$ is \emph{satisfied at} $\frm$ in $\mathcal{M}$, written
-$\mathcal{M}, \frm \entails \varphi$, iff $\Vh(\varphi, l, \theta, o) = \Tv$.
+Let $\Mod = (\Frame, V)$ be a model and $\frm$ a point. We say
+$\varphi$ is \emph{satisfied at $\frm$ in $\Mod$}, written
+$\Mod, \frm \entails \varphi$, iff
+$\Vh(\varphi, l, \theta, o) = \Tv$.
 \end{definition}
 
 \begin{definition}[Consequence]
-Let $\Gamma \subseteq \mathcal{L}$ and $\varphi \in \mathcal{L}$.
+Let $\Gamma \subseteq \Lang$ and $\varphi \in \Lang$.
 \begin{itemize}
-  \item \emph{Local entailment at} $\frm$ in $\mathcal{M}$:
-  $\Gamma \entails_{\mathcal{M}, \frm} \varphi$ iff
-  $\mathcal{M}, \frm \entails \gamma$ for every $\gamma \in \Gamma$ implies
-  $\mathcal{M}, \frm \entails \varphi$.
-  \item \emph{Universal entailment}: $\Gamma \entails \varphi$ iff
-  $\Gamma \entails_{\mathcal{M}, \frm} \varphi$ for every model
-  $\mathcal{M}$ and every point $\frm$ of $\mathcal{M}$.
+  \item \emph{Local entailment at $\frm$ in $\Mod$}, written
+  $\Gamma \entails_{\Mod, \frm} \varphi$: if every $\gamma \in \Gamma$
+  satisfies $\Mod, \frm \entails \gamma$, then $\Mod, \frm \entails \varphi$.
+  \item \emph{Universal entailment} $\Gamma \entails \varphi$:
+  $\Gamma \entails_{\Mod, \frm} \varphi$ for every model $\Mod$ and every
+  point $\frm$ of $\Mod$.
 \end{itemize}
 \end{definition}
 
-These are the standard $K_3$-style consequence relations, lifted point-wise
-over the frame.
+\begin{proposition}[Universal entails local]
+$\Gamma \entails \varphi$ implies
+$\Gamma \entails_{\Mod, \frm} \varphi$ for every $\Mod$ and $\frm$. The
+converse fails.
+\end{proposition}
+
+\begin{proof}
+The forward direction is immediate from the definition. For failure of
+the converse, take any frame with two points $\frm_1 \neq \frm_2$, an atom
+$p \in \AP$, and the model $V$ defined by $V(p, \frm_1) = \Tv$,
+$V(p, \frm_2) = \Fv$, and $V(q, \cdot) = \Uv$ for every other atom $q$
+and every point. Then $\varnothing \entails_{\Mod, \frm_1} p$ (since
+$\Mod, \frm_1 \entails p$) but $\varnothing \not\entails p$
+(Theorem~\ref{thm:notaut}).
+\end{proof}
+
+\begin{remark}
+By Theorem~\ref{thm:reduction}, universal entailment coincides with
+$K_3$-consequence at the level of formulas: $\Gamma \entails \varphi$ iff
+for every $K_3$-assignment $v : \AP \to \Vals$, if $\Vh_{K_3}(\gamma, v)
+= \Tv$ for every $\gamma \in \Gamma$ then $\Vh_{K_3}(\varphi, v) = \Tv$.
+Indexing adds nothing at the universal level; it matters only locally.
+\end{remark}
 
 \section{Properties}
 \label{sec:properties}
 
-We collect the basic meta-theoretic properties of LTO-K3. The proofs are
-short because the semantics is point-wise: at each fixed $\frm$ the system
-collapses to ordinary $K_3$, so every $K_3$ identity lifts.
+We collect the basic meta-theoretic properties of LTO-K3. Most are
+immediate corollaries of Theorem~\ref{thm:reduction}; we state them for
+completeness and to fix notation for the indexed setting.
 
 \begin{lemma}[Locality]\label{lem:locality}
-For every model $\mathcal{M}$, every formula $\varphi$, and every point
-$\frm$, the value $\Vh(\varphi, l, \theta, o)$ depends only on the
-restriction of $V$ to $\mathrm{AP}(\varphi) \times \{l\} \times \{\theta\}
-\times \{o\}$.
+For every model $\Mod$, every formula $\varphi$, and every point $\frm$,
+$\Vh(\varphi, l, \theta, o)$ depends only on the restriction of $V$ to
+$\AP(\varphi) \times \{l\} \times \{\theta\} \times \{o\}$.
 \end{lemma}
 
 \begin{proof}
-Structural induction on $\varphi$. The base case ($\varphi = p$) is
-immediate by the definition of $\Vh$ on atoms. For each compound case
-$\varphi = \lnot\psi$, $\psi \land \chi$, $\psi \lor \chi$, $\psi \to \chi$,
-the value at $\frm$ is a function (the corresponding Kleene connective) of
-$\Vh(\psi, l, \theta, o)$ and possibly $\Vh(\chi, l, \theta, o)$, which by
-the induction hypothesis depend only on $V$ restricted as claimed.
-$\mathrm{AP}(\varphi)$ is the union of the $\mathrm{AP}$ of its
-sub-formulas, so the restriction propagates. \qedhere
+By Theorem~\ref{thm:reduction}, $\Vh(\varphi, l, \theta, o) =
+\Vh_{K_3}(\varphi, v_{\frm}^{\Mod})$, and standard $K_3$-semantics
+depends only on the values of $v_{\frm}^{\Mod}$ on $\AP(\varphi)$.
 \end{proof}
 
 \begin{proposition}[Information-monotonicity]\label{prop:mono}
 Let $V_1, V_2$ be base valuations on the same frame with
-$V_1(p, l, \theta, o) \sqsubseteq V_2(p, l, \theta, o)$ for every atom and
-every point. Then for every formula $\varphi$ and every point $\frm$,
+$V_1(p, l, \theta, o) \sqsubseteq V_2(p, l, \theta, o)$ for every atom
+and every point. Then for every formula $\varphi$ and every point $\frm$,
 $\Vh_1(\varphi, l, \theta, o) \sqsubseteq \Vh_2(\varphi, l, \theta, o)$.
 \end{proposition}
 
 \begin{proof}
-Structural induction, using that $\lnot_{K_3}, \land_{K_3}, \lor_{K_3},
-\to_{K_3}$ are each monotone in $\sqsubseteq$ in each argument (a standard
-$K_3$ result, verified by inspection of the truth tables).
+At a fixed $\frm$, both sides equal the $K_3$-evaluation of $\varphi$
+under the induced assignments, and $\lnot_{K_3}, \land_{K_3}, \lor_{K_3}$
+are monotone in $\sqsubseteq$ component-wise (standard $K_3$ result,
+verified by inspection of the truth tables). Structural induction
+completes the proof.
 \end{proof}
 
 \begin{corollary}[Conservativity over classical logic]\label{cor:cons}
-Let $\mathcal{M}$ be a model in which $V$ never takes the value $\Uv$.
-Then for every formula $\varphi$ and every point $\frm$,
+Let $\Mod$ be a model in which $V$ never takes the value $\Uv$. Then for
+every formula $\varphi$ and every point $\frm$,
 $\Vh(\varphi, l, \theta, o) \in \{\Tv, \Fv\}$, and the resulting value
-coincides with the classical (two-valued) valuation of $\varphi$ under the
-same atomic assignment.
+coincides with the classical (two-valued) valuation of $\varphi$ under
+the same atomic assignment.
 \end{corollary}
 
 \begin{proof}
-By Proposition~\ref{prop:mono} and inspection of the Kleene tables: when
-neither input is $\Uv$, every Kleene connective returns the classical
-value.
+When neither input is $\Uv$, every Kleene connective returns the
+classical value (inspection). The corollary follows by structural
+induction (alternatively, by Theorem~\ref{thm:reduction} and the
+analogous $K_3$ result).
+\end{proof}
+
+\begin{notation}[Semantic equivalence]
+Write $\varphi \eqv \psi$ iff $\Vh(\varphi, l, \theta, o) =
+\Vh(\psi, l, \theta, o)$ for every model $\Mod$ and every point $\frm$.
+\end{notation}
+
+\begin{lemma}[Replacement of equivalents]
+\label{lem:replace}
+If $\varphi \eqv \psi$ then for every formula $\chi$ and every occurrence
+of $\varphi$ in $\chi$, replacing that occurrence by $\psi$ yields a
+formula $\chi'$ with $\chi \eqv \chi'$.
+\end{lemma}
+
+\begin{proof}
+Structural induction on $\chi$. The base case ($\chi = \varphi$) is by
+hypothesis. The compound cases follow because each Kleene connective is
+a function of the truth values of its sub-formulas: replacing a
+sub-formula by an equivalent one does not change those values, so the
+top-level value is unchanged. (Equivalently: $\eqv$ is a congruence on
+the formula algebra because Kleene connectives are well-defined
+functions on $\Vals$.)
 \end{proof}
 
 \begin{proposition}[De Morgan laws]\label{prop:demorgan}
-For all formulas $\varphi, \psi$ and all $\frm$,
-\begin{align*}
-\Vh(\lnot(\varphi \land \psi), l, \theta, o) &= \Vh(\lnot\varphi \lor \lnot\psi, l, \theta, o), \\
-\Vh(\lnot(\varphi \lor \psi), l, \theta, o) &= \Vh(\lnot\varphi \land \lnot\psi, l, \theta, o).
-\end{align*}
+For all $\varphi, \psi$:
+$\lnot(\varphi \land \psi) \eqv \lnot\varphi \lor \lnot\psi$ and
+$\lnot(\varphi \lor \psi) \eqv \lnot\varphi \land \lnot\psi$.
 \end{proposition}
 
 \begin{proof}
-By case analysis on $(\Vh(\varphi), \Vh(\psi)) \in \Vals \times \Vals$
-(nine cases per identity). Each case checks directly against the truth
-tables of Section~\ref{sec:prelim}.
+At a fixed point, by case analysis on
+$(\Vh(\varphi), \Vh(\psi)) \in \Vals \times \Vals$ (nine cases per
+identity) using the Kleene tables.
 \end{proof}
 
-\begin{proposition}[Double negation, idempotence, commutativity, associativity]\label{prop:basic}
-For all $\varphi, \psi, \chi$ and all $\frm$, $\Vh$ satisfies:
-$\lnot\lnot\varphi \equiv \varphi$;\;
-$\varphi \land \varphi \equiv \varphi$;\;
-$\varphi \lor \varphi \equiv \varphi$;\;
-$\varphi \land \psi \equiv \psi \land \varphi$;\;
-$\varphi \lor \psi \equiv \psi \lor \varphi$;\;
-$(\varphi \land \psi) \land \chi \equiv \varphi \land (\psi \land \chi)$;\;
-$(\varphi \lor \psi) \lor \chi \equiv \varphi \lor (\psi \lor \chi)$,
-where $\equiv$ means equality of $\Vh$-values at every point of every
-model.
+\begin{proposition}[Standard identities]\label{prop:basic}
+For all $\varphi, \psi, \chi$:
+$\lnot\lnot\varphi \eqv \varphi$;\;
+$\varphi \land \varphi \eqv \varphi$;\;
+$\varphi \lor \varphi \eqv \varphi$;\;
+$\varphi \land \psi \eqv \psi \land \varphi$;\;
+$\varphi \lor \psi \eqv \psi \lor \varphi$;\;
+$(\varphi \land \psi) \land \chi \eqv \varphi \land (\psi \land \chi)$;\;
+$(\varphi \lor \psi) \lor \chi \eqv \varphi \lor (\psi \lor \chi)$;\;
+$\varphi \land (\psi \lor \chi) \eqv (\varphi \land \psi) \lor (\varphi \land \chi)$;\;
+$\varphi \lor (\psi \land \chi) \eqv (\varphi \lor \psi) \land (\varphi \lor \chi)$.
 \end{proposition}
 
 \begin{proof}
-Each is a finite truth-table check, lifted point-wise via
-Lemma~\ref{lem:locality}.
+Each is a finite truth-table check on $\Vals$, lifted point-wise via
+Theorem~\ref{thm:reduction}.
 \end{proof}
 
 \begin{theorem}[No universal $\Tv$-tautologies]\label{thm:notaut}
-There is no formula $\varphi \in \mathcal{L}$ such that
-$\entails \varphi$ (i.e., $\Vh(\varphi, l, \theta, o) = \Tv$ in every model
-at every point).
+There is no formula $\varphi \in \Lang$ with $\entails \varphi$.
 \end{theorem}
 
 \begin{proof}
-Consider the model $\mathcal{M}_\Uv$ on any frame with
-$V(p, l, \theta, o) = \Uv$ for every atom $p$ and every point. By
-induction on $\varphi$, using the Kleene tables (each connective returns
-$\Uv$ when all inputs are $\Uv$), $\Vh(\varphi, l, \theta, o) = \Uv$ for
-every $\varphi$ and every $\frm$. Hence no formula evaluates to $\Tv$
-universally. This re-derives, in the indexed setting, the well-known
-absence of $K_3$-tautologies under designated value $\Tv$~\cite{kleene1952}.
+Consider the model $\Mod_\Uv$ on any frame with $V(p, \frm) = \Uv$ for
+every atom and every point. By structural induction on $\varphi$, using
+that every Kleene connective returns $\Uv$ when every input is $\Uv$, we
+have $\Vh(\varphi, \frm) = \Uv$ for every $\varphi$ and every $\frm$.
+Hence no formula evaluates to $\Tv$ universally.
 \end{proof}
 
-\begin{corollary}[Failure of LEM and of contradiction]\label{cor:lem}
+\begin{corollary}\label{cor:lem}
 $\not\entails p \lor \lnot p$ and $\not\entails \lnot(p \land \lnot p)$.
 \end{corollary}
 
-\begin{proof}
-Take $\mathcal{M}_\Uv$ as in Theorem~\ref{thm:notaut}: both formulas
-evaluate to $\Uv$, not $\Tv$.
-\end{proof}
-
 \begin{remark}
 Theorem~\ref{thm:notaut} is the price of taking $\Tv$ as the sole
-designated value in $K_3$. It does not mean the logic is useless---it
-means valid \emph{inferences} (consequences from non-empty $\Gamma$) are
-the appropriate notion of validity. For example, $\{p, p \to q\} \entails
-q$ holds: by inspection of the implication and conjunction tables, whenever
-$\Vh(p) = \Vh(p \to q) = \Tv$, we have $\Vh(q) = \Tv$.
+designated value in $K_3$. It does not mean the logic is useless: valid
+\emph{inferences} from non-empty contexts are the appropriate notion of
+validity. For example, $\{p, \lnot p \lor q\} \entails q$ holds: at any
+point where $\Vh(p) = \Tv$, the table for $\lor$ forces
+$\Vh(\lnot p \lor q) = \Vh(q)$, so if the latter is $\Tv$ then so is the
+former.
 \end{remark}
+
+\section{Decidability and Complexity}
+\label{sec:complexity}
+
+We assume formulas, finite subsets of $\Gamma \subseteq \Lang$, finite
+fragments of frames, and base valuations to be presented in the usual
+finitary way (formulas as syntax trees; valuations as finite tables on
+the atoms and points actually mentioned). Sizes refer to the total
+description length.
+
+\begin{proposition}[Model checking]
+\label{prop:mc}
+Given a finite model $\Mod$ (i.e., a finite table for $V$ on the points
+and atoms used) and a formula $\varphi$, computing
+$\Vh(\varphi, \frm)$ takes time $O(|\varphi|)$ assuming constant-time
+lookup of $V$ at the relevant atoms.
+\end{proposition}
+
+\begin{proof}
+Bottom-up evaluation of the syntax tree of $\varphi$, applying a
+constant-time Kleene table lookup at each internal node.
+\end{proof}
+
+\begin{theorem}[Complexity of consequence]
+\label{thm:complexity}
+Universal entailment $\Gamma \entails \varphi$ for finite $\Gamma$ is
+co-NP-complete. So is local entailment for finite $\Gamma$.
+\end{theorem}
+
+\begin{proof}
+By Theorem~\ref{thm:reduction}, universal entailment coincides with
+$K_3$-consequence at the level of formulas, which is known to be
+co-NP-complete (it reduces to classical SAT/VAL via the standard
+embedding of $K_3$ into classical two-valued logic; see, e.g.,
+\cite{hahnle1993}). Local entailment at a specified point is at least as
+hard (universal entailment is the intersection over points), and is in
+co-NP by guessing a falsifying assignment at the point and checking in
+linear time (Proposition~\ref{prop:mc}). Membership and hardness match,
+giving co-NP-completeness.
+\end{proof}
+
+\begin{corollary}[Sound and complete proof systems]
+LTO-K3 inherits, via Theorem~\ref{thm:reduction}, the sound and complete
+tableau and signed-clause-resolution proof systems for
+$K_3$~\cite{hahnle1993}. A formal derivation of
+$\Gamma \entails \varphi$ in LTO-K3 is a $K_3$-derivation of
+$\varphi$ from $\Gamma$ at the level of formulas.
+\end{corollary}
 
 \section{Worked Example}
 \label{sec:example}
 
 Let $L = \{l_{\mathrm{EU}}, l_{\mathrm{US}}\}$, $\Theta = \{\theta_0,
-\theta_1\}$, $O = \{o_{\mathrm{Alice}}, o_{\mathrm{Bob}}\}$. Let $p$ be the
-atomic proposition ``the package has been delivered'' and $q$ ``the package
-has cleared customs.'' A possible base valuation:
+\theta_1\}$, $O = \{o_{\mathrm{Alice}}, o_{\mathrm{Bob}}\}$. Let $p$
+abbreviate ``the package has been delivered'' and $q$ ``the package has
+cleared customs.'' A base valuation:
+
 \begin{center}
 \small
 \begin{tabular}{lll|cc}
@@ -435,125 +603,126 @@ $l_{\mathrm{US}}$ & $\theta_1$ & $o_{\mathrm{Alice}}$ & $\Fv$ & $\Uv$ \\
 \bottomrule
 \end{tabular}
 \end{center}
-Then at $(l_{\mathrm{EU}}, \theta_1, o_{\mathrm{Alice}})$,
-$\Vh(p \land q) = \Tv$ (Alice in the EU at $\theta_1$ knows both); at
-$(l_{\mathrm{EU}}, \theta_1, o_{\mathrm{Bob}})$, $\Vh(p \land q) = \Uv$
-(Bob does not yet know whether the package has been delivered, even though
-he knows it has cleared customs); at $(l_{\mathrm{US}}, \theta_1,
-o_{\mathrm{Alice}})$, $\Vh(p \land q) = \Fv$ (the proposition is false in
-the US frame because $\Vh(p) = \Fv$). Different points yield different
-truth values for \emph{the same formula}---this is the design.
+
+Then $\Vh(p \land q)$ takes value $\Tv$ at
+$(l_{\mathrm{EU}}, \theta_1, o_{\mathrm{Alice}})$ (Alice in the EU at
+$\theta_1$ knows both); $\Uv$ at $(l_{\mathrm{EU}}, \theta_1,
+o_{\mathrm{Bob}})$ (Bob does not yet know whether the package has been
+delivered, even though he knows it has cleared customs); and $\Fv$ at
+$(l_{\mathrm{US}}, \theta_1, o_{\mathrm{Alice}})$ (the proposition is
+false in the US frame because $\Vh(p) = \Fv$ there). The same formula
+yields different values at different points: this is the design.
+
+By Theorem~\ref{thm:reduction}, each row of the table determines a
+$K_3$-assignment, and the value of $p \land q$ at that row is exactly the
+$K_3$-evaluation of $p \land q$ under that assignment.
 
 \section{Related Work}
 \label{sec:related}
 
-The components of LTO-K3 are each well-studied.
-
-\paragraph{Three-valued logics.} $K_3$~\cite{kleene1952} is one of several
-three-valued logics with different motivations and different
-connectives. {\L}ukasiewicz $\text{\L}_3$~\cite{lukasiewicz1920} differs
-from $K_3$ in implication: $\Uv \to_{\text{\L}_3} \Uv = \Tv$, which
-yields the tautology $p \to p$ and other classical theorems. Bochvar's
-internal $B_3$~\cite{bochvar1981} is ``infectious'': any operation with a
-$\Uv$ input returns $\Uv$, even $\Tv \lor \Uv$. Priest's
+\paragraph{Three-valued logics.}
+$K_3$~\cite{kleene1952} is one of several three-valued logics with
+different motivations and connectives. {\L}ukasiewicz
+$\text{\L}_3$~\cite{lukasiewicz1920} differs from $K_3$ only in
+implication: $\Uv \to_{\text{\L}_3} \Uv = \Tv$, yielding the tautology
+$p \to p$ and other classical theorems. Bochvar's internal
+$B_3$~\cite{bochvar1981} is ``infectious'': any operation with a $\Uv$
+input returns $\Uv$, even $\Tv \lor \Uv$. Priest's
 LP~\cite{priest1979} uses the Kleene tables but designates
-$\{\Tv, \Uv\}$, yielding a paraconsistent logic in which contradictions can
-be true and LEM holds. Belnap's $\mathbf{FOUR}$~\cite{belnap1977} adds a
-fourth value (``both true and false'') and is appropriate when contradictory
-information is to be tolerated rather than collapsed to $\Uv$.
+$\{\Tv, \Uv\}$, yielding a paraconsistent logic in which contradictions
+can be true and LEM holds. Belnap's $\mathbf{FOUR}$~\cite{belnap1977}
+adds a fourth value (``both true and false'') for tolerating
+contradictory information.
 
-We choose $K_3$ with designated value $\Tv$ because the reading of $\Uv$ we
-want is purely epistemic (``not yet known'') and information-monotonic
-(Proposition~\ref{prop:mono}): resolving an $\Uv$ to a classical value
-never overturns a previously determined truth. $\text{\L}_3$ breaks this
-property (its implication is not monotone in the obvious sense); LP changes
-the designated set; $B_3$ propagates $\Uv$ too aggressively for our use
-case; $\mathbf{FOUR}$ conflates uncertainty with inconsistency.
+We choose $K_3$ with designated value $\Tv$ because the reading of $\Uv$
+we want is purely epistemic (``not yet known'') and information-monotonic
+(Proposition~\ref{prop:mono}). $\text{\L}_3$ breaks this property
+(implication is not monotone in the obvious sense); LP changes the
+designated set; $B_3$ propagates $\Uv$ too aggressively; $\mathbf{FOUR}$
+conflates uncertainty with inconsistency.
 
-\paragraph{Temporal and modal logics.} Prior~\cite{prior1957} introduced
-tense operators; Pnueli~\cite{pnueli1977} introduced LTL for program
-verification; Clarke and Emerson~\cite{clarke1981} introduced CTL. These
-logics index truth by time (or by states reachable in time) but use
+\paragraph{Temporal and modal logics.}
+Prior~\cite{prior1957} introduced tense operators; Pnueli~\cite{pnueli1977}
+introduced LTL; Clarke and Emerson~\cite{clarke1981} introduced CTL. These
+logics index truth by time (or states reachable in time) but use
 classical two-valued semantics and quantify over states with modal
-operators. Kripke~\cite{kripke1963} gave possible-worlds semantics for
-modal logic; the entire modal-logic
-tradition~\cite{blackburn2001} indexes truth by worlds and uses
-$\Box, \Diamond$ to quantify over them. Hybrid
-logic~\cite{areces2007hybrid} adds nominals $i$ and the operator $@_i$ to
-refer to specific worlds in the object language. LTO-K3 differs by
-\emph{not} quantifying over points in the object language at all---there
-are no $\Box, \Diamond, \mathsf{F}, \mathsf{G}, K_o, @_i$. Indices live
-only in the meta-language.
+operators. Kripke~\cite{kripke1963} gave possible-worlds semantics; the
+entire modal-logic tradition~\cite{blackburn2001} indexes truth by worlds
+and uses $\Box, \Diamond$ to quantify over them. Hybrid
+logic~\cite{areces2007hybrid} adds nominals $i$ and $@_i$ to refer to
+specific worlds in the object language. LTO-K3 differs in not
+quantifying over points in the object language at all.
 
 \paragraph{Epistemic logics.} Hintikka~\cite{hintikka1962} introduced
-epistemic modal logic with $K_a$ operators. The textbook treatment is
-Fagin et al.~\cite{fagin1995}. Multi-agent epistemic temporal logic
-combines these dimensions, but again with two-valued semantics and modal
-operators. Three-valued epistemic logics exist but are typically formulated
-with modal operators rather than as a flat indexed valuation.
+epistemic modal logic with $K_a$ operators; see Fagin et
+al.~\cite{fagin1995} for the textbook treatment. Multi-agent epistemic
+temporal logic combines these dimensions, but again with two-valued
+semantics and modal operators.
 
 \paragraph{Three-valued spatio-temporal and runtime-verification logics.}
 Bauer et al.~\cite{bauer2011rv} developed LTL$_3$, a three-valued LTL
-variant for runtime monitoring with truth values true, false, and
-inconclusive. Spatial logics~\cite{aiello2007handbook} introduce explicit
-spatial indices for reasoning about topological structure. These works are
-the closest neighbours of LTO-K3.
+variant for runtime monitoring. Spatial logics~\cite{aiello2007handbook}
+introduce explicit spatial indices for reasoning about topological
+structure. These works are the closest neighbours of LTO-K3.
 
-\paragraph{Honest positioning.} Relative to the above, LTO-K3 is best read
-as a deliberately impoverished system. It has fewer expressive resources
-than hybrid logic, fewer than multi-modal epistemic temporal logic, and
-fewer than LTL$_3$. What it offers in return is a uniform treatment of
-three indices (location, time, observer) as concrete and equally
-first-class, and a self-contained semantics that fits on a page. We make
-no claim that LTO-K3 supersedes any of these systems; we claim only that it
-is a useful \emph{starting point} when their full machinery is not
-required.
+\paragraph{Honest positioning.} Relative to the above, LTO-K3 is
+deliberately less expressive: it has fewer resources than hybrid logic,
+fewer than multi-modal epistemic temporal logic, and fewer than
+LTL$_3$. What it offers in return is a uniform treatment of three indices
+(location, time, observer) as concrete and equally first-class, and a
+self-contained semantics that fits on a page. Theorem~\ref{thm:reduction}
+makes precise the price of this minimalism: at any single point, LTO-K3
+is exactly $K_3$ and nothing more. We make no claim that LTO-K3
+supersedes any of these systems; we claim only that it is a useful
+\emph{starting point}.
 
 \section{Limitations}
 \label{sec:limitations}
 
 \begin{enumerate}
-  \item \textbf{No cross-frame operators.} LTO-K3 cannot express ``$\varphi$
-  at $l_1$ implies $\psi$ at $l_2$'' or ``$\varphi$ now will be $\psi$
-  later.'' Such statements require modal operators, hybrid nominals, or
-  explicit bridging rules, none of which are part of the core.
-  \item \textbf{No quantification.} LTO-K3 cannot express
-  ``$\varphi$ holds for some observer'' or ``$\varphi$ holds at all
-  times.'' These require either propositional quantifiers or
-  meta-quantification.
+  \item \textbf{No cross-frame operators.} LTO-K3 cannot express
+  ``$\varphi$ at $l_1$ implies $\psi$ at $l_2$'' or ``$\varphi$ now will
+  be $\psi$ later.''
+  \item \textbf{No quantification.} LTO-K3 cannot express ``$\varphi$
+  holds for some observer'' or ``$\varphi$ holds at all times.''
   \item \textbf{Structure on $L, \Theta, O$ is invisible.} Time is not
   ordered, locations are not topologized, observers do not have
-  information-state relations. Any such structure must be added by an
-  extension and cannot be queried within $\mathcal{L}$.
-  \item \textbf{No $\Tv$-tautologies} (Theorem~\ref{thm:notaut}). Validity
-  must be reasoned about via non-trivial entailments, not via tautologies.
-  Users accustomed to classical-logic tautological reasoning will need to
-  adjust.
-  \item \textbf{$\Uv$ is undifferentiated.} ``Not yet known'', ``in
-  principle unknowable'', and ``not yet defined'' are collapsed into a
-  single value. Distinguishing them requires a richer truth-value set
-  (e.g.,~\cite{belnap1977}) or a probabilistic / possibilistic layer.
+  information-state relations. Such structure must be added by extension.
+  \item \textbf{Functional incompleteness and no $\Tv$-tautologies.}
+  Inherited from $K_3$ (Section~\ref{sec:prelim},
+  Theorem~\ref{thm:notaut}). Users accustomed to tautological reasoning
+  must adjust to entailment-based reasoning from non-empty contexts.
+  \item \textbf{$\Uv$ is undifferentiated.} ``Not yet known,'' ``in
+  principle unknowable,'' and ``not yet defined'' collapse into one
+  value. Distinguishing them requires a richer truth-value
+  set~\cite{belnap1977} or a probabilistic / possibilistic layer.
   \item \textbf{No interaction between observers.} There is no notion of
-  ``$o_1$ knows that $o_2$ knows $\varphi$''; that requires an explicit
-  $K_o$ operator and is intentionally outside scope.
-  \item \textbf{The cross-frame undefinedness is a restriction, not a
-  feature.} We have framed it as a deliberate design choice, and it is, but
-  it is also a real expressive limitation. Users who need cross-frame
-  reasoning will need to layer on additional machinery.
+  ``$o_1$ knows that $o_2$ knows $\varphi$''; that requires explicit
+  $K_o$ operators (out of scope).
+  \item \textbf{Cross-frame undefinedness is a restriction.} We have
+  framed it as a deliberate design choice, and it is, but it is also a
+  real expressive limitation. Users who need cross-frame reasoning will
+  need to layer on additional machinery.
+  \item \textbf{No gain over $K_3$ at a fixed point.} By
+  Theorem~\ref{thm:reduction}, the indexing contributes nothing at a
+  single point. The value of LTO-K3 is therefore not deeper logic but
+  uniform treatment of context across points and a discipline that
+  forbids silent context-mixing.
 \end{enumerate}
 
 \section{Conclusion}
 We have presented LTO-K3, a minimal three-valued logic in which every
 proposition is evaluated under an explicit triple of location, time, and
-observer. The system is a careful packaging of standard
-ingredients---Kleene's $K_3$, indexed valuations, designated-value
-consequence---into a single self-contained core, together with a small
-body of meta-theoretic properties (locality, monotonicity,
-conservativity, De~Morgan, absence of $\Tv$-tautologies). We have been
-explicit about what is new (the packaging) and what is not (everything
-else), and have named the system's limitations. Cross-frame composition,
-quantification, and modal operators are deliberate omissions to be
-addressed by domain-specific extensions.
+observer. We gave a formal syntax, a compositional point-wise semantics,
+two consequence relations, a reduction theorem that anchors LTO-K3 in
+Kleene's $K_3$, and a small body of meta-theoretic results (uniqueness,
+locality, monotonicity, conservativity, replacement, De~Morgan, absence
+of $\Tv$-tautologies). The reduction theorem lets us inherit decidability,
+the co-NP-completeness of consequence, and sound and complete proof
+systems from $K_3$. We were explicit about what is new (the packaging)
+and what is not (everything else), and named the system's limitations.
+Cross-frame composition, quantification, and modal operators are
+deliberate omissions to be addressed by domain-specific extensions.
 
 \begin{thebibliography}{99}
 
@@ -592,8 +761,8 @@ G.~Priest, ``The logic of paradox,'' \emph{Journal of Philosophical
 Logic}, vol.~8, no.~1, pp.~219--241, 1979.
 
 \bibitem{bochvar1981}
-D.~A. Bochvar, ``On a three-valued logical calculus and its application to
-the analysis of the paradoxes of the classical extended functional
+D.~A. Bochvar, ``On a three-valued logical calculus and its application
+to the analysis of the paradoxes of the classical extended functional
 calculus,'' translated by M.~Bergmann, \emph{History and Philosophy of
 Logic}, vol.~2, pp.~87--112, 1981 (original Russian 1938).
 
@@ -601,6 +770,10 @@ Logic}, vol.~2, pp.~87--112, 1981 (original Russian 1938).
 E.~M. Clarke and E.~A. Emerson, ``Design and synthesis of synchronization
 skeletons using branching-time temporal logic,'' in \emph{Logics of
 Programs}, LNCS 131, Springer, pp.~52--71, 1981.
+
+\bibitem{hahnle1993}
+R.~H{\"a}hnle, \emph{Automated Deduction in Multiple-Valued Logics},
+Oxford University Press, Oxford, 1993.
 
 \bibitem{fagin1995}
 R.~Fagin, J.~Y. Halpern, Y.~Moses, and M.~Y. Vardi, \emph{Reasoning About
@@ -620,8 +793,8 @@ J.~van~Benthem, and F.~Wolter, eds., \emph{Handbook of Modal Logic},
 Elsevier, pp.~821--868, 2007.
 
 \bibitem{bauer2011rv}
-A.~Bauer, M.~Leucker, and C.~Schallhart, ``Runtime verification for
-LTL and TLTL,'' \emph{ACM Transactions on Software Engineering and
+A.~Bauer, M.~Leucker, and C.~Schallhart, ``Runtime verification for LTL
+and TLTL,'' \emph{ACM Transactions on Software Engineering and
 Methodology}, vol.~20, no.~4, art.~14, 2011.
 
 \end{thebibliography}
