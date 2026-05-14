@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+title: "Location, Time, and Observer Based Three-Valued Logic: A Minimal Formal System Where Truth is Never Absolute"
+abstract: >-
+  LTO-K3 is a minimal formal system in which the truth value of a proposition
+  is never absolute but is always evaluated with respect to three explicit
+  parameters: a location, a time, and an observer. The system admits exactly
+  three truth values (true, false, unknown) composed via Kleene's strong
+  three-valued connectives. The paper gives a formal syntax, a compositional
+  point-wise semantics, two consequence relations, and proves a body of
+  meta-theoretic results including a reduction theorem to Kleene's K3.
+type: software
+authors:
+  - family-names: Nopper
+    given-names: Norbert
+repository-code: "https://github.com/McNopper/TimeLocationBasedThreeValuedLogic"
+url: "https://github.com/McNopper/TimeLocationBasedThreeValuedLogic"
+license: CC-BY-4.0
+version: "0.1.0"
+date-released: "2026-04-19"
+keywords:
+  - three-valued logic
+  - Kleene logic
+  - indexed semantics
+  - temporal logic
+  - epistemic logic
+  - contextual semantics
+  - partial information
