@@ -1,0 +1,279 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{microtype}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  citecolor=blue!60!black,
+  urlcolor=blue!60!black,
+}
+
+\newtheorem{definition}{Definition}
+\newtheorem{remark}{Remark}
+
+\title{Location, Time, and Observer Based Three-Valued Logic:\\
+A Minimal Formal System Where Truth is Never Absolute}
+\author{Norbert Nopper}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+We present a minimal formal system in which the truth value of a proposition
+is never absolute, but is always evaluated with respect to three explicit
+parameters: a \emph{location}, a \emph{time}, and an \emph{observer}.
+The system admits exactly three truth values---\textbf{T}~(true),
+\textbf{F}~(false), and \textbf{U}~(unknown)---composed via Kleene's strong
+three-valued connectives. Although three-valued logics, temporal logics,
+epistemic logics, and modal logics have all been studied extensively, the
+present contribution is not the discovery of new components but a
+\emph{packaging} of known ideas into a single, minimal, self-contained primitive
+$V : P \times L \times \Theta \times O \to \{T, F, U\}$, in which location and
+observer are concrete and non-optional, and in which logical connectives are
+explicitly undefined across distinct $(l, \theta, o)$ frames. The result is a
+unified framework suitable as a starting point for systems that must reason
+about partial knowledge under spatial, temporal, and epistemic context.
+\end{abstract}
+
+\noindent\textbf{Keywords:} three-valued logic, temporal logic, epistemic logic,
+Kleene logic, contextual semantics.
+
+\section{Introduction}
+Classical two-valued logic forces every proposition into one of two states:
+\emph{true} or \emph{false}. In many practical settings---verification,
+distributed systems, knowledge representation, robotics, legal reasoning---this
+dichotomy is too coarse. Truth often depends on \emph{where} an evaluation is
+performed, \emph{when} it is performed, and \emph{who} performs it.
+
+We introduce a minimal logic that takes these dependencies as primitive.
+Every proposition is evaluated under an explicit tuple
+$(l, \theta, o)$ of location, time, and observer, and may take one of three
+values: true, false, or unknown. The system is intentionally austere: it
+contains no modal operators, no accessibility relations, and no transition
+systems. Its purpose is to serve as a compact, unambiguous core on which richer
+domain-specific layers (synchronization, trust, frame alignment) may later be
+built.
+
+\section{Truth Values}
+The system recognizes exactly three truth states, summarized in
+Table~\ref{tab:values}.
+
+\begin{table}[h]
+\centering
+\caption{The three truth values.}
+\label{tab:values}
+\begin{tabular}{ll}
+\toprule
+\textbf{Value} & \textbf{Meaning} \\
+\midrule
+\textbf{T} (True)    & Known to hold at this location, time, and for this observer. \\
+\textbf{F} (False)   & Known not to hold at this location, time, and for this observer. \\
+\textbf{U} (Unknown) & Indeterminate at this location, time, and for this observer. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Classical logic forces every proposition into \textbf{T} or \textbf{F}. The
+present system acknowledges a third reality: that we do not always know.
+
+\section{Contextual Parameters}
+
+\subsection{Location}
+Truth is a function of \emph{where} it is evaluated. The same proposition at
+the same moment can hold different values in different locations:
+\begin{align*}
+V(p, l_1, \theta, o) &= T \qquad \text{true in this location,} \\
+V(p, l_2, \theta, o) &= F \qquad \text{false in another,} \\
+V(p, l_3, \theta, o) &= U \qquad \text{unknown elsewhere.}
+\end{align*}
+``Location'' is broadly defined: a physical place, a network, a jurisdiction,
+or a frame of reference. The essential point is that spatial and structural
+context matters.
+
+\subsection{Time}
+Truth is a function of \emph{when} it is evaluated. The same proposition can
+yield different values at different moments---and this is not a contradiction,
+it is the system working as designed:
+\begin{align*}
+V(p, l, \theta_1, o) &= U \qquad \text{not yet determined,} \\
+V(p, l, \theta_2, o) &= T \qquad \text{resolved to true,} \\
+V(p, l, \theta_3, o) &= F \qquad \text{later becomes false.}
+\end{align*}
+A future event is \emph{unknown} before it occurs, \emph{true} when it
+happens, and may become \emph{false} if conditions change. Time is not
+optional: it is fundamental to every evaluation.
+
+\subsection{Observer}
+Truth is a function of \emph{who} evaluates it. The same proposition at the
+same location and time can hold different values for different observers:
+\begin{align*}
+V(p, l, \theta, o_1) &= T \qquad \text{true for this observer,} \\
+V(p, l, \theta, o_2) &= F \qquad \text{false for another,} \\
+V(p, l, \theta, o_3) &= U \qquad \text{unknown to a third.}
+\end{align*}
+``Observer'' is broadly defined: a person, a sensor, a system, an institution,
+or any evaluating entity. Different observers may have different information,
+beliefs, or interpretive frameworks, and therefore arrive at different truth
+values for the same proposition at the same location and time. This reflects
+the epistemic reality that knowledge is observer-dependent.
+
+\section{The Valuation Function}
+The core primitive maps a proposition, evaluated at a location, time, and for
+an observer, to a truth value.
+
+\begin{definition}[Valuation]
+Let $P$ be a set of propositions, $L$ a set of locations, $\Theta$ a set of
+time points, and $O$ a set of observers. The valuation function is
+\[
+V : P \times L \times \Theta \times O \;\longrightarrow\; \{T, F, U\}.
+\]
+For any $p \in P$, $l \in L$, $\theta \in \Theta$, and $o \in O$,
+\[
+V(p, l, \theta, o) \in \{T, F, U\}.
+\]
+\end{definition}
+
+Location, time, and observer are the \emph{inputs}; the truth value is the
+\emph{output}. No parameter is optional.
+
+\section{Logical Connectives}
+The three values compose through Kleene's strong three-valued
+operations~\cite{kleene1952}.
+
+\subsection{Conjunction}
+\[
+\begin{array}{c|ccc}
+\land & T & U & F \\ \hline
+T & T & U & F \\
+U & U & U & F \\
+F & F & F & F
+\end{array}
+\]
+
+\subsection{Disjunction}
+\[
+\begin{array}{c|ccc}
+\lor & T & U & F \\ \hline
+T & T & T & T \\
+U & T & U & U \\
+F & T & U & F
+\end{array}
+\]
+
+\subsection{Negation}
+\[
+\begin{array}{c|c}
+p & \lnot p \\ \hline
+T & F \\
+U & U \\
+F & T
+\end{array}
+\]
+
+\subsection{Implication}
+\[
+\begin{array}{c|ccc}
+\to & T & U & F \\ \hline
+T & T & U & F \\
+U & T & U & U \\
+F & T & T & T
+\end{array}
+\]
+
+\subsection{Frame Discipline}
+All operations are evaluated at a given $(l, \theta, o)$. When combining
+propositions, both must be evaluated within the same frame:
+\begin{align*}
+V(p_1, l, \theta, o) \land V(p_2, l, \theta, o) &\quad \text{valid: same } (l, \theta, o), \\
+V(p_1, l_1, \theta_1, o_1) \land V(p_2, l_2, \theta_2, o_2) &\quad \text{undefined: cross-frame composition.}
+\end{align*}
+The logical connectives never escape the location, temporal, and observer
+frame.
+
+\begin{remark}
+Biconditional ($\leftrightarrow$) and quantifiers ($\forall$, $\exists$) are
+deliberately omitted to keep the system minimal. They can be defined in terms
+of the primitives above if needed.
+\end{remark}
+
+\begin{remark}
+Cross-frame composition---combining values from different
+$(l, \theta, o)$ tuples---is left undefined by design. Defining it would
+require explicit bridging rules (synchronization constraints, trust policies,
+observer-alignment or frame-alignment functions) that are domain-specific and
+beyond the scope of this core system.
+\end{remark}
+
+\section{Novelty and Related Work}
+The individual components of this system are well-established. Three-valued
+logics due to {\L}ukasiewicz~\cite{lukasiewicz1920} and
+Kleene~\cite{kleene1952} define truth values without temporal or spatial
+indexing. Temporal logics such as LTL and CTL index truth by time but rest on
+classical two-valued semantics. Epistemic logics~\cite{hintikka1962} index
+truth by agent knowledge but typically remain two-valued. Modal
+logics~\cite{kripke1963} index truth by possible worlds, again typically
+two-valued. Three-valued spatio-temporal logics have been explored in
+verification and robotics contexts.
+
+The contribution of the present system is in its \emph{formulation}, not in
+the discovery of its parts:
+\begin{enumerate}
+  \item \textbf{Location as concrete and non-optional.} Not abstract
+  ``possible worlds'' or ``states'', but a first-class parameter representing
+  physical places, networks, jurisdictions, or frames of reference.
+  \item \textbf{Observer as explicit and non-optional.} Truth is always
+  relative to an evaluating entity, making the epistemic dimension a
+  first-class parameter rather than an implicit assumption.
+  \item \textbf{The cross-frame constraint.} Logical connectives are
+  explicitly undefined across different $(l, \theta, o)$ tuples, rather than
+  silently mixing contexts.
+  \item \textbf{Minimalism.} No modal operators ($\Box$, $\Diamond$), no
+  accessibility relations, no transition systems. Just
+  $V : P \times L \times \Theta \times O \to \{T, F, U\}$ as a self-contained
+  primitive.
+\end{enumerate}
+
+This is a novel \emph{packaging} of known ideas into a minimal, unified formal
+system---not a novel discovery.
+
+\section{Conclusion}
+We have presented a minimal three-valued logic in which every proposition is
+evaluated under an explicit triple of location, time, and observer. The
+resulting system is small enough to be specified on a single page, yet
+expressive enough to capture partial knowledge under spatial, temporal, and
+epistemic context. Cross-frame composition is intentionally left to future,
+domain-specific extensions.
+
+\begin{thebibliography}{9}
+\bibitem{lukasiewicz1920}
+J.~{\L}ukasiewicz, \emph{O logice tr\'ojwarto\'sciowej} [On three-valued
+logic], Ruch Filozoficzny, vol.~5, pp.~170--171, 1920.
+
+\bibitem{kleene1952}
+S.~C. Kleene, \emph{Introduction to Metamathematics}, North-Holland, 1952.
+
+\bibitem{prior1957}
+A.~N. Prior, \emph{Time and Modality}, Oxford University Press, 1957.
+
+\bibitem{hintikka1962}
+J.~Hintikka, \emph{Knowledge and Belief: An Introduction to the Logic of the
+Two Notions}, Cornell University Press, 1962.
+
+\bibitem{kripke1963}
+S.~A. Kripke, ``Semantical considerations on modal logic,''
+\emph{Acta Philosophica Fennica}, vol.~16, pp.~83--94, 1963.
+\end{thebibliography}
+
+\end{document}
