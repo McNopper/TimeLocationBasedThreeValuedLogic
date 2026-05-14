@@ -37,3 +37,20 @@ Truth values compose via Kleene's strong three-valued connectives (`∧`, `∨`,
 The complete formal specification — including the valuation function, truth tables for all connectives, frame-discipline rules, novelty discussion, and references — is in the scientific paper:
 
 📄 **[paper.pdf](paper.pdf)** &nbsp;·&nbsp; LaTeX source: **[paper.tex](paper.tex)**
+
+## Building the Paper
+
+The paper uses a standard LaTeX toolchain. With a TeX distribution installed (TeX Live, MiKTeX, or MacTeX), build the PDF with either:
+
+```sh
+latexmk -pdf paper.tex
+```
+
+or, equivalently:
+
+```sh
+pdflatex paper.tex
+pdflatex paper.tex   # second pass resolves cross-references
+```
+
+No external bibliography tool is required — references are embedded via `thebibliography`.

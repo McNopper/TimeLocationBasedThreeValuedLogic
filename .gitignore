@@ -1,6 +1,40 @@
+## LaTeX build artifacts
 *.aux
 *.log
 *.out
 *.fls
 *.fdb_latexmk
 *.synctex.gz
+
+# Bibliography
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+
+# Table of contents / lists
+*.toc
+*.lof
+*.lot
+
+# Index / glossary
+*.idx
+*.ind
+*.ilg
+*.glo
+*.gls
+*.glg
+*.acn
+*.acr
+*.alg
+
+# Beamer
+*.nav
+*.snm
+*.vrb
+
+# Misc auxiliary
+*.bak
+*.tmp
+*.swp
+*~
