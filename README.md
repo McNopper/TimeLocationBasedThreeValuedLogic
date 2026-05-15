@@ -1,62 +1,51 @@
 # Location, Time, and Observer Based Three-Valued Logic
 
-*Truth depends on location, time, and observer.*
+*by Norbert Nopper*
 
-A minimal formal logic where truth is never absolute. Every proposition is evaluated with respect to **where**, **when**, and **who** — there is no such thing as a "bare" truth value.
-
-by *Norbert Nopper*
-
----
+A minimal formal system where truth is never absolute.
 
 ## Overview
 
-The system is built on a single primitive: a valuation function
+**LTO-K3** is a minimal formal system in which the truth value of a
+proposition is never absolute but is always evaluated with respect to three
+explicit parameters: a *location*, a *time*, and an *observer*. The system
+admits exactly three truth values — **T** (true), **F** (false), and **U**
+(unknown) — composed via Kleene's strong three-valued connectives.
 
-```
-V : P × L × Θ × O → { T, F, U }
-```
+The valuation is a single primitive
 
-that maps a proposition `p`, a location `l`, a time `θ`, and an observer `o` to one of three truth values:
+$$V \;:\; \mathrm{AP} \times L \times \Theta \times O \;\longrightarrow\; \{\mathbf{T}, \mathbf{F}, \mathbf{U}\}$$
 
-- **T** — known to hold at this `(l, θ, o)`,
-- **F** — known not to hold at this `(l, θ, o)`,
-- **U** — unknown / indeterminate at this `(l, θ, o)`.
+assigning a truth value to each atomic proposition at each
+$(l, \theta, o)$ point. Compound formulas are evaluated point-wise via the
+Kleene tables.
 
-Truth values compose via Kleene's strong three-valued connectives (`∧`, `∨`, `¬`, `→`), evaluated within a single `(l, θ, o)` frame. Cross-frame composition is deliberately left undefined.
+The paper gives a formal syntax, a compositional point-wise semantics, two
+consequence relations (local and universal), and proves a small body of
+results: uniqueness of the extended valuation, locality,
+information-monotonicity, conservativity over classical logic, replacement
+of equivalents, the De Morgan laws, the absence of **T**-tautologies, and a
+*reduction theorem* that shows LTO-K3 at a fixed point is exactly Kleene's
+$K_3$. From the reduction theorem the paper inherits decidability, the
+co-NP-completeness of consequence, and the existence of sound and complete
+proof systems. The contribution is a careful synthesis with explicit, proven
+properties — the *packaging* of location, time, and observer as
+non-optional, concrete, first-class parameters — rather than a new logic.
 
-## Key Ideas
+## The paper
 
-- **Three values, not two.** Classical logic forces every proposition into True or False. This system adds **Unknown** as a first-class value.
-- **Location is concrete.** Not an abstract "possible world" — a physical place, network, jurisdiction, or frame of reference.
-- **Time is non-optional.** Truth can change between moments without contradiction.
-- **Observer is explicit.** Truth is always relative to an evaluating entity (person, sensor, system, institution).
-- **Frame discipline.** Logical connectives stay within one `(l, θ, o)` tuple; bridging across frames is a domain-specific extension, not part of the core.
+- 📄 **[paper.pdf](paper.pdf)** — typeset PDF
+- 📝 **[paper.tex](paper.tex)** — LaTeX source
 
-## Full Paper
-
-The complete formal specification — including the valuation function, truth tables for all connectives, frame-discipline rules, novelty discussion, and references — is in the scientific paper:
-
-📄 **[paper.pdf](paper.pdf)** &nbsp;·&nbsp; LaTeX source: **[paper.tex](paper.tex)**
-
-## Building the Paper
-
-The paper uses a standard LaTeX toolchain. With a TeX distribution installed (TeX Live, MiKTeX, or MacTeX), build the PDF with either:
+Rebuild with any standard LaTeX engine:
 
 ```sh
 latexmk -pdf paper.tex
 ```
 
-or, equivalently:
-
-```sh
-pdflatex paper.tex
-pdflatex paper.tex   # second pass resolves cross-references
-```
-
-No external bibliography tool is required — references are embedded via `thebibliography`.
+No external bibliography tool is required — references are embedded via
+`thebibliography`.
 
 ## License
 
-This work — including the paper (`paper.tex`, `paper.pdf`) and accompanying text — is licensed under the **[Creative Commons Attribution 4.0 International License (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)**.
-
-You are free to share and adapt the material for any purpose, even commercially, provided that appropriate credit is given to the author (Norbert Nopper) and a link to the license is provided. See [LICENSE](LICENSE) for the full legal text.
+CC BY 4.0. See [LICENSE](LICENSE).
